@@ -1,0 +1,29 @@
+
+#ifndef _MAPS_DEF
+#define _MAPS_DEF
+
+#define GEOCENTRIC 0
+// #define GEOMETRIC  1
+// #if CARTESIAN && CARTESIAN != 2
+// #warning *** CARTESIAN REDEFINED TO ANOTHER VALUE!!! ***
+// #endif
+// #define CARTESIAN  2
+#define CARTESIAN  1
+
+#define MAP_ERROR_STATUS -1
+
+#define MAP_FORMAT_CODE_GLOBE      1
+#define MAP_FORMAT_CODE_GRD        2
+#define MAP_FORMAT_CODE_COMODO     3
+#define MAP_FORMAT_CODE_ASCII      4
+#define MAP_FORMAT_CODE_ASCII_GIS  5
+#define MAP_FORMAT_CODE_ASCII_SLIM 6
+
+#define MAP_FORMAT_NAME_GLOBE      "GLOBE"
+#define MAP_FORMAT_NAME_GRD        "GRD"
+#define MAP_FORMAT_NAME_COMODO     "COMODO"
+#define MAP_FORMAT_NAME_ASCII      "ASCII"
+#define MAP_FORMAT_NAME_ASCII_GIS  "GIS"
+#define MAP_FORMAT_NAME_ASCII_SLIM "SLIM"
+
+#endif

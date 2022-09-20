@@ -1,0 +1,1054 @@
+
+/**************************************************************************
+
+  POC-SOLVERS interface, 2006-2012
+
+  Part of the Unstructured Ocean Grid initiative and SYMPHONIE suite
+
+Contributors:
+
+  Florent Lyard      LEGOS/CNRS, Toulouse, France
+  Cyril Nguyen       LA/CNRS,    Toulouse, France
+  Damien Allain      LEGOS/CNRS, Toulouse, France
+  Yoann Le Bars      PhD, LEGOS, Toulouse, France
+
+***************************************************************************/
+
+#define VERBOSE
+
+#include <string.h>
+#include <omp.h>
+#include <complex.h>
+
+#include "solvers-interface.h"
+#include "linear-gmres.h"
+#include "solverlib.h"
+
+extern int MPI_Init_thread_DONE;
+
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+  triplet : i,j,value (row-arranged) or j,i,value (column-arranged)
+  
+  CSR : value array, column index array, pointer array (optionally cardinal array)
+  CSC : value array,    row index array, pointer array (optionally cardinal array)
+
+             natural ordering    natural format    natural numbering  
+              
+  PASTIX   compressed columns               CSC              FORTRAN
+  UMFPACK  compressed columns               CSC                    C
+  CXSPARSE compressed columns               CSC                    C
+  MUMPS       compressed rows     row-major COO              FORTRAN
+  HIPS        compressed rows     row-major COO            C/FORTRAN (HIPS_FORTRAN_NUMBERING switch)
+  MAPHYS      
+
+
+  T-UGOm natural format is CSR (compressed rows ordering using pointers to 
+  column indices for each row)
+  
+  Issues:
+  
+  - MPI distributed pastix kept in CSC, then transpose system solved
+  
+  - SCOTCH found to be sensitive to partitions contiguousity (in pastix)
+ 
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
+
+  
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+  Some OpenMPI distributions do not support MPI_THREAD_MULTIPLE, that is wanted
+  by default by SCOTCH when invoked by PASTIX. You can check that by launching:
+  
+  >ompi_info | grep -i thread
+  
+  In that case, you have 2 options :
+   - change your MPI library for one supporting MPI_THREAD_MULTIPLE 
+   - Rebuild Scotch without SCOTCH_PTHREAD and PaStiX with FORCE_NOSMP
+
+ 
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
+
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+  We have encountered a SMP issue with umfpack (requesting libopenblas_pthreads)
+  libumfpack-5.7.6.so version, detected in August 2017
+
+  issue : multi-threading disabled
+ 
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
+
+  
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+  MPI RHS/SOLUTION : distributed, centralized (on master proc), on demand (distributed/centralized)
+
+             MPI             RHS      SOLUTION  
+             
+  PASTIX     yes     distributed   distributed
+  UMFPACK     no               -             -
+  CXSPARSE    no               -             -
+  MUMPS      yes     centralized     on demand 
+  HIPS       yes       on demand     on demand
+  MAPHYS     yes       on demand     on demand
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
+
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  template <class T> int factorize_template(SOLVER_t<T> *solver, packed_t<T> & matrix, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  char *solver_name;
+  int status;
+  double default_precision=1.e-08;
+  double cputime1,cputime2;
+  int proc_id,ncpus,ierr;
+  int target_format, target_ordering, target_numbering;
+
+  solver_name=solver->name;
+    
+#ifdef HAVE_MPI
+   if(MPI_Init_thread_DONE==1) {
+     ierr = MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
+     ierr = MPI_Comm_size(MPI_COMM_WORLD, &ncpus);
+     cputime1 = MPI_Wtime();
+     }
+#endif
+  
+  if (strcmp(solver_name,"MUMPS") == 0) {
+//     target_numbering=1;
+//     target_format=COO;
+//     status = convert(*solver, target_format, target_ordering, target_numbering, verbose, debug);
+    status = convert(*solver, solver->targeted_format, solver->targeted_ordering, solver->targeted_numbering, verbose, debug);
+    if(status!=0) return(-1);
+    status=mumps_factorize(solver, verbose, debug);
+    }
+  else if  (strcmp(solver_name,"UMFPACK") == 0) {
+//     target_numbering=0;
+//     target_format=CSC;
+//     status = convert(*solver, target_format, target_ordering, target_numbering, verbose, debug);
+    status = convert(*solver, solver->targeted_format, solver->targeted_ordering, solver->targeted_numbering, verbose, debug);
+    if(status!=0) return(-1);
+    status=umfpack_factorize(solver, verbose, debug);
+    }
+  else if  (strcmp(solver_name,"GMRES") == 0) {
+    target_numbering=0;
+    target_format=CSR;
+    status = convert(*solver, target_format, target_ordering, target_numbering, verbose, debug);
+    if(status!=0) return(-1);
+    status=gmres_factorize(solver, verbose, debug);
+    }
+  else if  (strcmp(solver_name,"HYPRE") == 0) {
+//     target_numbering=1;
+//     target_format=COO;
+//     status = convert(solver, target_format, target_ordering, target_numbering, verbose, debug);
+//     if(status!=0) return(-1);
+//     status=hypre_factorize(solver, verbose, debug);
+    }
+  else if  (strcmp(solver_name,"HIPS") == 0) {
+//     target_numbering=1;
+//     target_format=COO;
+//     status = convert(*solver, target_format, target_ordering, target_numbering, verbose, debug);
+    status = convert(*solver, solver->targeted_format, solver->targeted_ordering, solver->targeted_numbering, verbose, debug);
+    if(status!=0) return(-1);
+    if(MPI_Init_thread_DONE==0) {
+      }
+    status=hips_factorize(solver, verbose, debug);
+    }
+  else if  (strcmp(solver_name,"LAPACK") == 0) {
+    target_numbering=1;
+    target_format=BND; 
+    status = convert(*solver, target_format, target_ordering, target_numbering, verbose, debug);
+    if(status!=0) return(-1);
+    status=lapack_factorize(solver, verbose, debug);
+    }
+  else if  (strcmp(solver_name,"SpDOMESTIC") == 0) {
+//     target_numbering=0;
+//     target_format=CSC;
+//     status = convert(*solver, target_format, target_ordering, target_numbering, verbose, debug);
+    status = convert(*solver, solver->targeted_format, solver->targeted_ordering, solver->targeted_numbering, verbose, debug);
+    if(status!=0) return(-1);
+    status=spdomestic_factorize(solver, verbose, debug);
+    }
+  else if  (strcmp(solver_name,"PASTIX") == 0) {
+    if(ncpus>1) {
+      target_numbering=1;
+      verbose=0;
+      target_format=CSC;
+      status = convert(*solver, target_format, target_ordering, target_numbering, verbose, debug);
+      status=pastix_factorize_parallel_distributed(solver, verbose, debug);    
+      }
+    else {
+//       target_numbering=1;
+//       target_format=CSC;
+      status = convert(*solver, solver->targeted_format, solver->targeted_ordering, solver->targeted_numbering, verbose, debug);
+      if(status!=0) return(-1);
+      status=pastix_factorize_sequential(solver, verbose, debug);
+      }
+    }
+  else if  (strcmp(solver_name,"PASTIX-SEQUENTIAL") == 0) {
+//     target_numbering=1;
+//     target_format=CSC;
+//     status = convert(*solver, target_format, target_ordering, target_numbering, verbose, debug);
+    status = convert(*solver, solver->targeted_format, solver->targeted_ordering, solver->targeted_numbering, verbose, debug);
+    if(status!=0) return(-1);
+    status=pastix_factorize_sequential(solver, verbose, debug);
+    }
+  else {
+    printf("factorize, unknown solver : %s \n",solver_name);
+    status = -1;
+    }
+    
+#ifdef  HAVE_MPI
+   if(MPI_Init_thread_DONE==1) {
+     cputime2 = MPI_Wtime();
+     if (verbose==1 && proc_id == 0) {
+       printf("--------------------------------------------\n");
+       printf("%s: %s factorization ellapsed time= %e\n",__FUNCTION__, solver_name, cputime2-cputime1);
+       printf("--------------------------------------------\n"); 
+       }
+     }
+#endif
+
+  return(status);
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int factorize(SOLVER_t<double> *solver, packed_t<double> & matrix, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  status=factorize_template(solver, matrix, verbose, debug);
+  return(status);
+}
+  
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int factorize(SOLVER_t< complex<double> > *solver, packed_t< complex<double> > & matrix, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  status=factorize_template(solver, matrix, verbose, debug);
+  return(status);
+}
+
+// /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+// 
+//   template <class T> int solve_template(SOLVER_t<T> *solver, T *RHS, int transposed, int verbose, bool debug)
+//   
+// /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+// {
+//   char *solver_name;
+//   int status;
+//   double cputime1,cputime2;
+//   int proc_id, ncpus, ierr;
+//   
+// #ifdef HAVE_MPI
+//    if(MPI_Init_thread_DONE==1) {
+//      ierr = MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
+//      ierr = MPI_Comm_size(MPI_COMM_WORLD, &ncpus);
+//      cputime1 = MPI_Wtime();
+//      }
+// #endif
+//   
+//   solver_name=solver->name;
+//      
+//   if(verbose) printf("%s real-system solver, transpose=%d \n",solver_name, transposed);
+// 
+//   if (strcmp(solver_name,"MUMPS") == 0) { 
+//     status=mumps_solve(solver, RHS,transposed,verbose,debug);
+//     }
+//   else if  (strcmp(solver_name,"UMFPACK") == 0) {
+//     status=umfpack_solve(solver, RHS,transposed,verbose,debug);
+//     }
+//   else if  (strcmp(solver_name,"GMRES") == 0) {
+//     status=gmres_solve(solver, RHS,transposed,verbose,debug);
+//     }
+//   else if  (strcmp(solver_name,"LAPACK") == 0) {
+//     status=lapack_solve(solver, RHS,transposed,verbose,debug);
+//     }
+//   else if  (strcmp(solver_name,"SpDOMESTIC") == 0) {
+//     status=spdomestic_solve(solver, RHS,transposed,verbose,debug);
+//     }
+//   else if  (strcmp(solver_name,"HIPS") == 0) {
+//     status=hips_solve(solver, RHS,transposed,verbose,debug);
+//     }
+//   else if  (strcmp(solver_name,"PASTIX") == 0) {
+//     if(ncpus>1) {  
+// //       MPI_Barrier(MPI_COMM_WORLD);
+//       status=pastix_solve_parallel(solver, RHS,transposed, verbose, debug);
+//       }
+//     else {
+//       status=pastix_solve_sequential(solver, RHS,transposed, verbose, debug);
+//       }     
+//     }
+//   else if  (strcmp(solver_name,"PASTIX-SEQUENTIAL") == 0) {
+//     status=pastix_solve_sequential(solver, RHS,transposed, verbose, debug);
+//     }
+//   else {
+//     printf("solve, unknown solver : %s \n",solver_name);
+//     status=-1;
+//     }
+//      
+// #ifdef  HAVE_MPI
+// //   if(MPI_Init_thread_DONE==1 && verbose==1) {
+//   if(MPI_Init_thread_DONE==1) {
+//     cputime2 = MPI_Wtime();
+//     if (verbose==1 && proc_id == 0) {
+//       printf("--------------------------------------------\n");
+//       printf("%s: %s solving ellapsed time= %e\n",__FUNCTION__, solver_name, cputime2-cputime1);
+//       printf("--------------------------------------------\n");
+//       }
+//     }
+// #endif
+// 
+//   return(status);
+// }
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  template <class T> int solve_template(SOLVER_t<T> *solver, T *RHS, int transposed, int verbose, bool debug)
+  
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  char *solver_name;
+  int status;
+  double cputime1,cputime2;
+  int proc_id, ncpus, ierr;
+  
+#ifdef HAVE_MPI
+   if(MPI_Init_thread_DONE==1) {
+     ierr = MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
+     ierr = MPI_Comm_size(MPI_COMM_WORLD, &ncpus);
+     cputime1 = MPI_Wtime();
+     }
+#endif
+  
+  solver_name=solver->name;
+     
+  if(verbose) printf("%s real-system solver, transpose=%d \n",solver_name, transposed);
+
+  switch (solver->id) {
+    case SOLVER_ID_DIAGONAL:     /* no real solver used for diagonal matrices */
+      break;
+
+    case SOLVER_ID_DOMESTIC:
+      break;
+
+    case SOLVER_ID_LAPACK:
+      break;
+
+    case SOLVER_ID_SUNPERF:
+      break;
+
+    case SOLVER_ID_UMFPACK:  
+      status=umfpack_solve(solver, RHS,transposed,verbose,debug);
+      break;
+
+    case SOLVER_ID_GMRES:        /* ITERATIVE SOLVER */
+      status=gmres_solve(solver, RHS,transposed,verbose,debug);
+      break;
+
+    case SOLVER_ID_MUMPS: 
+      status=mumps_solve(solver, RHS,transposed,verbose,debug);
+      break;
+
+    case SOLVER_ID_MUMPS_SYM:
+      status=mumps_solve(solver, RHS,transposed,verbose,debug);
+      break;
+
+    case SOLVER_ID_SpDOMESTIC:
+      status=spdomestic_solve(solver, RHS,transposed,verbose,debug);
+      break;
+
+//    case SOLVER_ID_HYPRE:
+//      break;
+    
+    case SOLVER_ID_HIPS:
+      status=hips_solve(solver, RHS,transposed,verbose,debug);
+      break;  
+
+    case SOLVER_ID_PASTIX:
+      if(ncpus>1) {  
+        status=pastix_solve_parallel(solver, RHS,transposed, verbose, debug);
+        }
+      else {
+        status=pastix_solve_sequential(solver, RHS,transposed, verbose, debug);
+        }     
+      break;  
+
+    case SOLVER_ID_PASTIX_SEQUENTIAL:
+      status=pastix_solve_sequential(solver, RHS,transposed,verbose,debug);
+      break;  
+
+    default:
+      exit(-1);
+      break;
+    }
+     
+#ifdef  HAVE_MPI
+  if(MPI_Init_thread_DONE==1) {
+    cputime2 = MPI_Wtime();
+    if (verbose==1 && proc_id == 0) {
+      printf("--------------------------------------------\n");
+      printf("%s: %s solving ellapsed time= %e\n",__FUNCTION__, solver_name, cputime2-cputime1);
+      printf("--------------------------------------------\n");
+      }
+    }
+#endif
+
+  return(status);
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solve(SOLVER_t<double> *solver, double *RHS, int transposed, int verbose, bool debug)
+  
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  
+  status=solve_template(solver, RHS, transposed, verbose, debug);
+  
+  return(status);
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solve(SOLVER_t< complex<double> > *solver,  complex<double> *RHS, int transposed, int verbose, bool debug)
+  
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  
+  status=solve_template(solver, RHS, transposed, verbose, debug);
+  
+  return(status);
+}
+
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  template <typename T> int solver_init_template(int solver_id, MPI_Comm world, int nprocs, int nunknowns, SOLVER_t<T>* & solver, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int ierr;
+  int status;
+    
+  int  argc=0;
+  char **argv=0;
+  int  required;    /* MPI thread level required       */
+  int  provided;    /* MPI thread level provided       */
+  int  rank, size;
+  
+
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ 
+  solver structure default initialisation
+  
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+  solver=new SOLVER_t<T>;
+    
+  char *solver_name=get_SolverName(solver_id);
+  solver->name = strdup(solver_name);
+  
+/*------------------------------------------------------------------------------
+  default setting, possibly set to 1 in case of PASTIX solver */
+  solver->transpose_matrix=0;
+ 
+  solver->parameters =0;
+  
+  solver->RHS_distribution=SOLVER_CENTRALIZED;
+  solver->solution_distribution=SOLVER_CENTRALIZED;
+  
+  solver->communicator=0;
+  
+  
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ 
+  minimal MPI initialisation for sequential use
+  
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+#ifdef HAVE_MPI
+  switch(solver_id) {
+    case SOLVER_ID_MUMPS:
+    case SOLVER_ID_MUMPS_SYM:
+    case SOLVER_ID_HIPS:
+    case SOLVER_ID_PASTIX:
+    case SOLVER_ID_MAPHYS:
+      required = MPI_THREAD_MULTIPLE;
+      provided = -1;
+      if(MPI_Init_thread_DONE==0) {
+        MPI_Init_thread(&argc, &argv, required, &provided);
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        if (rank == 0) {
+          switch (provided) {
+            case MPI_THREAD_SINGLE:
+              printf("MPI_Init_thread level = MPI_THREAD_SINGLE\n");
+              break;
+            case MPI_THREAD_FUNNELED:
+              printf("MPI_Init_thread level = MPI_THREAD_FUNNELED\n");
+              break;
+            case MPI_THREAD_SERIALIZED:
+              printf("MPI_Init_thread level = MPI_THREAD_SERIALIZED\n");
+              break;
+            case MPI_THREAD_MULTIPLE:
+              printf("MPI_Init_thread level = MPI_THREAD_MULTIPLE\n");
+              break;
+            default:
+              printf("MPI_Init_thread level = ???\n");
+              break;
+            }
+          }
+        MPI_Init_thread_DONE=1;
+        }
+      break;
+    }
+  
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ 
+  dedicated MPI communicators initialisation
+  
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+  if(world==0) world=MPI_COMM_WORLD;
+  
+  ierr = MPI_Comm_rank(world, &rank);
+  ierr = MPI_Comm_size(world, &size);
+  
+  if(debug) printf("%s cpu %d (in calling group of %d) : start\n",__FUNCTION__,rank, size);  
+
+  int color=0, key=0;
+  MPI_Comm communicator;
+  rank=-1;
+
+/*------------------------------------------------------------------------------
+  default value */
+  if(nprocs==-1) nprocs=size;
+
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  
+  handle communicators (duplicate/split) :
+  
+  in some cases (such as T-UGOm subcycling, which sub-domains would be to small
+  to have efficient parallel computing with too many processors), we may need 
+  less processors than initially requested at run launch.
+  
+  see http://mpitutorial.com/tutorials/introduction-to-groups-and-communicators
+  
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+  if(size==nprocs) {
+    ierr = MPI_Comm_dup(world, &communicator);
+    ierr = MPI_Comm_rank(communicator, &rank);
+    }
+  else {
+    if(nunknowns==0) color=MPI_UNDEFINED;
+    ierr = MPI_Comm_split(world, color, key, &communicator);
+    if(nunknowns!=0) ierr = MPI_Comm_rank(world, &rank);
+    }
+  
+  solver->communicator=communicator;
+  solver->rank=rank;
+  solver->size=size;
+#else
+  solver->rank=0;
+  solver->size=1;
+#endif
+  
+//   printf("%s cpu %d (in calling group of %d) : communictor=%d (MPI_COM_WORLD=%d)\n",__FUNCTION__,rank, size,communicator, MPI_COMM_WORLD);
+  
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  INIT MUMPS SOLVER
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+  if (strcmp(solver_name,"MUMPS") == 0) {
+    status=mumps_initialize(*solver, verbose, debug);
+    }
+
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  INIT UMFPACK SOLVER
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+  else if (strcmp(solver_name,"UMFPACK") == 0) {
+#ifdef UMFPACK
+    status=umfpack_initialize(*solver, verbose, debug);
+#else 
+    printf("Please compile poc-solvers library with -DUMFPACK \n");
+    exit(-1);
+#endif
+    }  
+
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  INIT GMRES SOLVER
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+  else if (strcmp(solver_name,"GMRES") == 0) {
+    status=gmres_initialize(*solver, verbose, debug);
+    }
+
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  INIT HYPRE SOLVER
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+  else if (strcmp(solver_name,"HYPRE") == 0) {
+#ifdef HYPRE
+    hypre_t<T> *parameters=new hypre_t<T>;
+    solver->parameters = parameters;
+#else 
+    printf("Please compile poc-solvers library with -DHYPRE \n");
+    exit(-1);
+#endif
+    }
+
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  INIT HIPS SOLVER
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+  else if (strcmp(solver_name,"HIPS") == 0) {
+    status=hips_initialize(*solver, verbose, debug);
+    }
+
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  INIT PASTIX SOLVER
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+  else if (strcmp(solver_name,"PASTIX") == 0) {
+#ifdef PASTIX
+    status=pastix_initialize(*solver, verbose, debug);
+#else 
+    printf("%s (line %d) : please compile poc-solvers library with -DPASTIX \n", __func__,__LINE__);
+    exit(-1);
+#endif
+    } 
+  
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  INIT PETSC SOLVER
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+  else if (strcmp(solver_name,"PETSC") == 0){
+    solver->parameters = NULL;   
+    printf("PETSC pas encore implimente\n");
+    exit(-1);
+    }
+
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  INIT LAPACK SOLVER 
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+  else if (strcmp(solver_name,"LAPACK") == 0){
+    solver->parameters = NULL;
+#ifdef LAPACK
+#else
+    printf("Please compile poc-solvers library with -DLAPACK \n");
+    exit(-1);
+#endif
+    }
+ 
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  INIT SpDOMESTIC SOLVER
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+  else if (strcmp(solver_name,"SpDOMESTIC") == 0){
+    status=spdomestic_initialize(*solver, verbose, debug);
+    }
+
+  else {
+    printf("Connait pas ce solveur : %s \n",solver_name);
+//     slv = NULL;
+    exit(-1);
+    }
+    
+  free(solver_name);
+
+  return(0);
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solver_init(int solver_id, MPI_Comm world, int nprocs, int nunknowns, SOLVER_t<double>* & solver, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  
+  status=solver_init_template(solver_id, world, nprocs, nunknowns, solver, verbose, debug);
+
+  return(status);
+}
+
+ 
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solver_init(int solver_id, MPI_Comm world, int nprocs, int nunknowns, SOLVER_t< complex<double> >* & solver, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  
+  status=solver_init_template(solver_id, world, nprocs, nunknowns, solver, verbose, debug);
+
+  return(status);
+}
+
+
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solver_init(int solver_id, size_t world, int nprocs, int nunknowns, SOLVER_t<double>* & solver, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+/*ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+  interface needed for non-MPI compilation of T-UGOm
+
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc*/
+{
+  int status;
+  
+  status=solver_init_template(solver_id, (MPI_Comm) world, nprocs, nunknowns, solver, verbose, debug);
+
+  return(status);
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solver_init(int solver_id, size_t world, int nprocs, int nunknowns, SOLVER_t< complex<double> >* & solver, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+/*ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+  interface needed for non-MPI compilation of T-UGOm
+
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc*/
+{
+  int status;
+  
+  status=solver_init_template(solver_id, (MPI_Comm) world, nprocs, nunknowns, solver, verbose, debug);
+
+  return(status);
+}
+
+// /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+// 
+//   template <typename T> int solver_init_template(int solver_id, int nprocs, packed_t<T> & packed, packed_t<T> & P, MPI_Comm world, SOLVER_t<T>* & solver, int verbose, bool debug)
+// 
+// /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+// {
+//   int status;
+//   
+//   status=solver_init(solver_id, world, nprocs, packed.nrows, solver, verbose, debug);
+//   
+//   status=factorize(solver, verbose, debug);
+//   
+//   return(status);
+// }
+// 
+// /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+// 
+//   int solver_init(int solver_id, int nprocs, packed_t<double> & packed, packed_t<double> & P, MPI_Comm world, SOLVER_t<double>* & solver, int verbose, bool debug)
+// 
+// /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+// {
+//   int status;
+//   
+//   status=solver_init(solver_id, world, nprocs, packed.nrows, solver, verbose, debug);
+//   
+//   status=factorize(solver, packed, verbose, debug);
+//   
+//   return(status);
+// }
+// 
+// /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+// 
+//   int solver_init(int solver_id, int nprocs, packed_t< complex<double> > & packed, packed_t< complex<double> > & P, MPI_Comm world, SOLVER_t< complex<double> >* & solver, int verbose, bool debug)
+// 
+// /*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+// {
+//   int status;
+//   
+//   status=solver_init(solver_id, world, nprocs, packed.nrows, solver, verbose, debug);
+//   
+//   status=factorize(solver, packed, verbose, debug);
+//   
+//   return(status);
+// }
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  template <typename T>int solver_terminate_template(SOLVER_t<T> *solver, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status=0, ierr;
+  MPI_Comm world;
+
+  if(solver==0) return(0);
+
+  switch (solver->id) {
+    case SOLVER_ID_DIAGONAL:     /* no real solver used for diagonal matrices */
+      break;
+
+    case SOLVER_ID_DOMESTIC:     /* DOMESTIC */
+      break;
+
+    case SOLVER_ID_LAPACK:       /* LAPACK */
+      break;
+
+    case SOLVER_ID_SUNPERF:      /* SUNPERF */
+      break;
+
+    case SOLVER_ID_UMFPACK:  
+      status=umfpack_terminate(solver, verbose, debug);
+      break;
+
+    case SOLVER_ID_GMRES:        /* ITERATIVE SOLVER */
+      status=gmres_terminate(solver, verbose, debug);
+      break;
+
+    case SOLVER_ID_MUMPS: 
+      status=mumps_terminate(solver, verbose, debug);
+      break;
+
+    case SOLVER_ID_MUMPS_SYM:
+      status=mumps_terminate(solver, verbose, debug);
+      break;
+
+    case SOLVER_ID_SpDOMESTIC:
+      status=spdomestic_terminate(solver, verbose, debug);
+      break;
+
+//    case 8:                      /* HYPRE */
+//      break;
+    
+    case SOLVER_ID_HIPS:
+      status=hips_terminate(solver, verbose, debug);
+      break;  
+
+    case SOLVER_ID_PASTIX:
+      status=pastix_terminate(solver, verbose, debug);
+      break;  
+
+    default:
+      exit(-1);
+      break;
+    }
+      
+#if HAVE_MPI
+  if(solver->rank!=-1) {
+    if(solver->communicator==MPI_COMM_WORLD) {
+      printf("%s cpu %d (in calling group of %d) : alert communictor=%d (MPI_COM_WORLD=%d)\n",__FUNCTION__,solver->rank, solver->size,solver->communicator, MPI_COMM_WORLD);
+      }
+    status=MPI_Comm_free(&solver->communicator);
+    }
+#endif
+
+  if(status!=0) {
+    printf("%s : solver =%d status=%d\n",__func__, solver->id, status);
+    }
+    
+  solver->destroy();
+
+  return(status);
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solver_terminate(SOLVER_t<double> *solver, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  
+  status=solver_terminate_template(solver, verbose, debug);
+
+  return(status);
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solver_terminate(SOLVER_t< complex<double> > *solver, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  
+  status=solver_terminate_template(solver, verbose, debug);
+
+  return(status);
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solver_terminate(SOLVER_t<double> *solver)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  int verbose=0;
+  bool debug=false;
+  
+  status=solver_terminate_template(solver, verbose, debug);
+
+  return(status);
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solver_terminate(SOLVER_t< complex<double> > *solver)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  int verbose=0;
+  bool debug=false;
+  
+  status=solver_terminate_template(solver, verbose, debug);
+
+  return(status);
+}
+
+/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  
+  solver interface compatibility with older versions
+  
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/
+
+#if OLD_SOLVER_VERSION
+#else
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int factorize(solver_t *slv, triplet *Mat, int verbose, bool debug)
+  
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  SOLVER_t<double> solver;
+ 
+  if(verbose==1) printf("enter %s\n",__FUNCTION__);
+
+  slv->Mat = Mat; 
+      
+  solver.d_import2packed(slv);
+
+  status=factorize(&solver, *solver.packed, verbose, debug);
+  
+  solver.d_export_packed(slv);
+  
+  return(status); 
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int factorizez(solver_t *slv, tripletz *Mat, int verbose, bool debug)
+  
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  SOLVER_t< complex<double> > solver;
+ 
+  if(verbose==1) printf("enter %s\n",__FUNCTION__);
+      
+  slv->Mat = Mat;
+  
+  solver.z_import2packed(slv);
+
+  status=factorize(&solver, *solver.packed, verbose, debug);
+  
+  solver.z_export_packed(slv);
+  
+  return(status); 
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solve(solver_t *slv, double *RHS, int transposed)
+  
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  int verbose=0;
+  bool debug=false;
+  
+  SOLVER_t<double> solver;
+ 
+  if(verbose==1) printf("enter %s\n",__FUNCTION__);
+      
+  solver.d_import2packed(slv);
+
+  status=solve(&solver, RHS, transposed, verbose, debug);
+  
+  return(status); 
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  int solvez(solver_t *slv, complex<double> *RHS, int transposed)
+  
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  int verbose=0;
+  bool debug=false;
+  SOLVER_t< complex<double> > solver;
+ 
+  if(verbose==1) printf("enter %s\n",__FUNCTION__);
+      
+  solver.z_import2packed(slv);
+
+  status=solve(&solver, RHS, transposed, verbose, debug);
+  
+  return(status); 
+}
+
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  solver_t *init_solver(int solver_id, MPI_Comm world, int nprocs, int nunknowns, int verbose, bool debug)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  solver_t *slv;
+  SOLVER_t<double> *solver;
+//   HYPERMATRIX_t<double> matrix;
+  
+//   status=solver_init(solver_id, matrix, world, nprocs, nunknowns, solver, verbose, debug);
+  status=solver_init(solver_id, world, nprocs, nunknowns, solver, verbose, debug);
+  
+  slv = (solver_t *) malloc(sizeof(solver_t));
+  solver->export_parameters(slv);
+
+  return(slv); 
+}
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+  solver_t *initz_solver(char *solver_name, int typsym, int verbose)
+
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+{
+  int status;
+  bool debug=false;
+  MPI_Comm world=0;
+  int nprocs=-1;
+  int nunknowns;
+  int solver_id;
+  solver_t *slv;
+  SOLVER_t< complex<double> > *solver;
+//   HYPERMATRIX_t< complex<double> > matrix;
+  
+  solver_id=get_SolverId(solver_name);
+
+//   status=solver_init(solver_id, matrix, world, nprocs, nunknowns, solver, verbose, debug);
+  status=solver_init(solver_id, world, nprocs, nunknowns, solver, verbose, debug);
+    
+  slv = (solver_t *) malloc(sizeof(solver_t));
+  solver->export_parameters(slv);
+
+  return(slv); 
+}
+
+
+#endif

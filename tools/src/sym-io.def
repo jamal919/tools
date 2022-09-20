@@ -1,0 +1,6 @@
+   /* rank (number of dimensions) for each variable */
+#  define RANK_lon 2
+#  define RANK_lat 2
+#  define RANK_landmask 2
+#  define RANK_topo 2
+#  define RANK_resolution 2

@@ -1,0 +1,39 @@
+#ifndef _VERSION_MACRO_DEF
+#define _VERSION_MACRO_DEF
+
+
+#include <config.h>
+
+#ifndef VERSION
+#define VERSION "*** UNKNOWN VERSION : THIS HAS BEEN COMPILED WITH AN OUT-OF DATE config.h AND SHOULD NOT BE CONSIDERED RELIABLE !!! RUN ./configure AGAIN ! ***"
+#warning *** UNKNOWN VERSION : THIS HAS BEEN COMPILED WITH AN OUT-OF DATE config.h AND SHOULD NOT BE CONSIDERED RELIABLE !!! RUN ./configure AGAIN ! ***
+#endif
+
+#ifndef PACKAGE_STRING
+#define PACKAGE_STRING "*** UNKNOWN PACKAGE_STRING : THIS HAS BEEN COMPILED WITH AN OUT-OF DATE config.h AND SHOULD NOT BE CONSIDERED RELIABLE !!! RUN ./configure AGAIN ! ***"
+#warning *** UNKNOWN PACKAGE_STRING : THIS HAS BEEN COMPILED WITH AN OUT-OF DATE config.h AND SHOULD NOT BE CONSIDERED RELIABLE !!! RUN ./configure AGAIN ! ***
+#endif
+
+
+#include "revision.def"
+
+#ifndef HG_REV
+#define HG_REV "Unknown"
+#endif
+
+#ifndef REVISION
+#define REVISION "Unknown revision"
+#endif
+
+
+/*----------------------------------------------------------------------------*/
+/// gives full line information
+/**
+Useful for assertions. Needs #TOSTRING.
+*/
+/*----------------------------------------------------------------------------*/
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+#define __LINE_FILE_PACKAGE_REVISION  "line " TOSTRING(__LINE__) " of " __FILE__ " of " PACKAGE_STRING " " REVISION
+/*XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+
+#endif

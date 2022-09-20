@@ -1,0 +1,175 @@
+
+Solvers and companions softwares
+
+
+All MPI-compliant solvers (PASTIX, MUMPS, HIPS) should be installed in their MPI mode.
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+If you cannot use /usr/local, it is convenient to create a local directory (in the following example it 
+is /home/softs/local), populate it with include, lib, bin directories, and the set the following variables:
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/softs/local/lib
+export LIBRARY_PATH=$LIBRARY_PATH:/home/softs/local/lib
+export CPATH=$CPATH:/home/softs/local/include
+
+To ease the change of versions, it is advised to create a link:
+
+pastix -> pastix_5.2.2.22
+scotch -> scotch_6.0.4
+etc...
+
+Then populate local/lib, local/include, local/bin directories with link toward solvers/companion softwares 
+appropriate targets
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+-------------------------------------------------------------------------------------------------------------------
+METIS :
+
+download : http://glaros.dtc.umn.edu/gkhome/views/metis
+
+recommended/verified version : 5.1.0
+
+full instructions in BUILD.txt file (cmake-based installation)
+
+make config prefix=/home/ecola/softs/metis-5.1.0
+make install
+
+-------------------------------------------------------------------------------------------------------------------
+SCOTCH : 
+
+download : https://gforge.inria.fr/projects/scotch/
+
+recommended/verified version : 6.0.4
+
+hints for install:
+------------------
+
+copy Make.inc/Makefile.inc.x86-64_pc_linux2 into Makefile.inc
+
+change:
+CCD             = gcc
+with:
+CCD             = mpicc
+
+in case of MPI_THREAD_MULTIPLE issue in PASTIX (check with: ompi_info | grep -i thread) :
+
+change:
+CFLAGS          = -O3 -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_PTHREAD -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME -DSCOTCH_PTHREAD -Drestrict=__restrict -DIDXSIZE64
+with:
+CFLAGS          = -O3 -DCOMMON_FILE_COMPRESS_GZ -DCOMMON_PTHREAD -DCOMMON_RANDOM_FIXED_SEED -DSCOTCH_RENAME                  -Drestrict=__restrict -DIDXSIZE64
+
+then make:
+
+make scotch
+make ptscotch
+
+make esmumps
+make ptesmumps
+
+or equivalently:
+
+make scotch ptscotch esmumps ptesmumps
+
+-------------------------------------------------------------------------------------------------------------------
+MUMPS:
+
+download : http://mumps.enseeiht.fr
+
+recommended/verified version : 5.1.1
+
+hints for install:
+------------------
+
+full instructions in INSTALL file. Installation of METIS and/or SCOTCH highly recommended
+
+copy Make.inc/Makefile.inc.generic into Makefile.inc
+
+change Makefile.inc setting :
+
+change : 
+#SCOTCHDIR  = ${HOME}/scotch_6.0
+#ISCOTCH    = -I$(SCOTCHDIR)/include
+with   : 
+SCOTCHDIR  = /home/softs/scotch
+ISCOTCH    = -I$(SCOTCHDIR)/include
+
+change : 
+#LSCOTCH    = -L$(SCOTCHDIR)/lib -lptesmumps -lptscotch -lptscotcherr
+with   : 
+LSCOTCH    = -L$(SCOTCHDIR)/lib -lptesmumps -lptscotch -lptscotcherr -lscotch
+
+change : 
+#LMETISDIR = /opt/metis-5.1.0/build/Linux-x86_64/libmetis
+#IMETIS    = /opt/metis-5.1.0/include
+with   : 
+LMETISDIR = /home/softs/metis/lib
+IMETIS    = /home/softs/metis/include
+
+change : 
+CC      = cc
+FC      = f90
+FL      = f90
+with   : 
+CC      = mpicc
+FC      = mpif90
+FL      = mpif90
+
+uncomment : 
+#LMETIS    = -L$(LMETISDIR) -lmetis
+
+change : 
+ORDERINGSF  = -Dpord
+with   : 
+ORDERINGSF  = -Dscotch -Dptscotch -Dpord
+
+make all
+
+
+-------------------------------------------------------------------------------------------------------------------
+PASTIX : 
+
+download : https://gforge.inria.fr/projects/pastix/
+
+recommended/verified version : 5.2.22
+
+hints for install:
+------------------
+
+Go into the main PaStiX directory and select the config file corresponding to your machine in PASTIX_DIR/config/ 
+and copy it to PASTIX_DIR/config.in.
+
+in case of MPI_THREAD_MULTIPLE issue in PASTIX (check with: ompi_info | grep -i thread) :
+
+uncomment the following lines for non-threaded (NOSMP) version
+#VERSIONSMP  = _nosmp
+#CCTYPES    := $(CCTYPES) -DFORCE_NOSMP
+
+make install
+
+-------------------------------------------------------------------------------------------------------------------
+HIPS : 
+
+propriatery version only
+
+download : zdhips.tar.gz
+
+hints for install:
+------------------
+
+change dhips/makefile.inc and zhips/makefile.inc setting if necessary (i.e. accordingly to your directory path for solvers):
+
+SCOTCHDIR  = /home/softs/scotch
+
+Go to zdhips directory, then make
+
+-------------------------------------------------------------------------------------------------------------------
+UMFPACK:
+
+Linux package SuiteSparse
+
+
+
+

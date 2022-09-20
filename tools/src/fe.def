@@ -1,0 +1,242 @@
+
+#ifndef FE_DEF
+#define FE_DEF
+
+#define SEQUENTIAL_COMPUTING  0
+#define PARALLEL_COMPUTING    1
+
+/* Status */
+
+#define MESH_STATUS_UNDEFINED_ERROR       -1
+#define MESH_STATUS_OK                     0
+#define MESH_STATUS_FILE_NOT_FOUND         1
+#define MESH_STATUS_READ_ERROR             2
+#define MESH_STATUS_WRITE_ERROR            3
+#define MESH_STATUS_END_OF_FILE            4
+#define MESH_STATUS_UNABLE_TO_OPEN         5
+#define MESH_STATUS_MESH_LOADING_FAILED    6
+#define MESH_STATUS_INVALID_NAME           7
+#define MESH_STATUS_INVALID_EXTENSION      8
+
+#define MESH_STATUS_INVALID_PROJECTION    10
+#define MESH_STATUS_INVALID_MEMSIZE	  11
+#define MESH_STATUS_NOT_ENOUGH_MEMORY     12
+
+#define MESH_STATUS_UNKNOWN_FORMAT        15
+#define MESH_STATUS_UNKNOWN_FAMILY        16
+#define MESH_STATUS_MISSING_HEADER        17
+
+#define EF_STATUS_UNKNOWN_FORMAT          20
+#define EF_STATUS_UNKNOWN_FAMILY          21
+#define EF_STATUS_UNKNOWN_OBJECT          22
+
+#define MESH_STATUS_UNKNOWN_MODE          25
+
+#define MESH_STATUS_VERTEX_SET_EMPTY      30
+#define MESH_STATUS_NODE_SET_EMPTY        31
+#define MESH_STATUS_ELEMENT_SET_EMPTY     32
+
+#define MESH_STATUS_RESEARCH_FAILED       40
+
+#define MESH_STATUS_FLAT_ELEMENT          50
+#define MESH_STATUS_CW_ELEMENT            51
+#define MESH_STATUS_NULL_ELEMENT          52
+
+#define MESH_STATUS_NO_ALTERNATIVE_LINE   62
+#define MESH_STATUS_XS_ALTERNATIVE_LINE   63
+
+#define MESH_STATUS_TOO_MANY_VERTICES     70
+#define MESH_STATUS_TOO_MANY_TRIANGLES    71
+#define MESH_STATUS_TOO_MANY_NODES        72
+
+#define MESH_STATUS_INVALID_GRID         100
+
+/* Finite element mesh file's format*/
+
+#define S2R 0
+#define S2C 1
+#define V2R 3
+#define V2C 4
+#define SRF 5
+
+#define MESH_FILE_FORMAT_UNKNOWN     -1
+#define MESH_FILE_FORMAT_TRIGRID      0
+#define MESH_FILE_FORMAT_TRIANGLE     1
+#define MESH_FILE_FORMAT_QUODDY       2
+#define MESH_FILE_FORMAT_GOM          3
+#define MESH_FILE_FORMAT_NC2D         4
+#define MESH_FILE_FORMAT_NC3D         5
+#define MESH_FILE_FORMAT_MODULEF_P1   6
+#define MESH_FILE_FORMAT_MODULEF_P2   7
+#define MESH_FILE_FORMAT_GMSH        10
+#define MESH_FILE_FORMAT_GMSH_WW     11
+#define MESH_FILE_FORMAT_SCHISM      12
+#define MESH_FILE_FORMAT_METIS       20
+#define MESH_FILE_FORMAT_TELEMAC_BINARY     30
+#define MESH_FILE_FORMAT_TELEMAC_ASCII      31
+#define MESH_FILE_FORMAT_TELEMAC_SWAPPED    32
+#define MESH_FILE_FORMAT_QUADRANGLE_ASCII   40
+#define MESH_FILE_FORMAT_QUADRANGLE_NETCDF  41
+#define MESH_FILE_FORMAT_STRUCTURED_NETCDF  42
+
+#define NODE_FILE_FORMAT_UNKNOWN     -1
+#define NODE_FILE_FORMAT_TRIGRID      0
+#define NODE_FILE_FORMAT_QUODDY       1
+#define NODE_FILE_FORMAT_TRIANGLE     2
+#define NODE_FILE_FORMAT_XYZ          3
+#define NODE_FILE_FORMAT_SYMPHONY     4
+#define NODE_FILE_FORMAT_GMSH         5
+
+#define NODE_REPLACE_MODE        0
+#define NODE_ADD_MODE            1
+#define NQUAD 0
+#define INTGL 1
+
+
+#define NNPE_DIMNAME          0
+#define NNODES_DIMNAME        1
+#define CONNECTIVITY_VARNAME  2
+#define CONNECTIVITY_STDNAME  3
+#define CONNECTIVITY_LNGNAME  4
+
+
+
+
+#define UNSET -1
+
+#define AUTO       9998
+#define INTRINSIC  9999
+
+#define LAYERS  0
+#define LEVELS  1
+
+#define SPHERICAL  0
+#define CARTESIAN  1
+
+#define LGP0_D  0
+
+#define LGP1_C  1
+#define LGP1_D  2
+#define LGP2_C  3
+#define LGP2_D  4
+
+#define QLP0 10
+#define QLP1 11
+#define QLP2 12
+
+#define LGP0  0
+#define LGP1  1
+#define LGP2  3
+
+#define NCP1 20
+
+#define DGP1  2
+#define DGP2  4
+#define DNP1 21
+
+#define NCP1_C NCP1
+#define NCP1_D DNP1
+
+/* from genesis */
+/******************************/
+#define D_LGP0  100
+#define D_LGP1  101
+#define D_LGP2  102
+
+#define D_NCP1  111
+#define D_NCP2  112
+/******************************/
+
+#define NCP1xLGP0  0
+#define NCP1xLGP1  1
+#define NCP1xLGP2  2
+
+#define LGP1xLGP0  5
+#define LGP1xLGP1  6
+#define LGP1xLGP2  7
+
+#define DGP1xLGP0  10
+#define DGP1xLGP1  11
+#define DGP1xLGP2  12
+
+#define DNP1xLGP0  15
+#define DNP1xLGP1  16
+#define DNP1xLGP2  17
+
+#define LGP0xLGP1  20
+
+#define LGP2xLGP2  30
+
+#define IPGxLGP2  100
+
+
+#define LGP0xQLP1xLGP1   0
+
+#define NCP1xQLP0xLGP0  10
+#define NCP1xQLP0xLGP1  11
+#define NCP1xQLP0xQLP1  12
+#define NCP1xQLP1xLGP0  13
+#define NCP1xQLP1xLGP1  14
+#define NCP1xQLP1xQLP1  15
+
+#define DGP1xLGP2xLGP2  20
+
+#define IPG          100
+#define IPG_3        101
+#define IPG_7        102
+#define IPG_12       103
+
+#define CQP0         200
+#define CQP1         201
+#define CQN1         202
+
+#define CQP1xCQP0   1000
+#define CQN1xCQP0   1001
+
+
+#define FE_UNDEFINED    -1
+#define FE_LINE          1
+#define FE_TRIANGLE      2
+#define FE_QUADRANGLE    3
+#define FE_PENTACLE     20
+
+#define FE_STRUCTURED  100
+
+#define POINT_EXTERIOR -1
+#define POINT_BOUNDARY  0
+#define POINT_INTERIOR  1
+
+/*-----------------------------------------------------------------------------
+  computational flags */
+  
+#define MESH_FLAGGED_EDGE       -2
+#define MESH_UNDEFINED_EDGE     -1
+#define MESH_INTERIOR_EDGE       0
+
+#define MESH_UNDEFINED_NODE     -1
+#define MESH_INTERIOR_NODE       0
+#define MESH_LAND_NODE           1
+#define MESH_ISLAND_NODE         2
+#define MESH_PERMEABLE_NODE      3
+#define MESH_GEOSTROPHY_NODE     4
+#define MESH_ELEVATION_NODE      5
+
+#define FE_UNDEFINED_NODE          -1
+#define FE_INTERIOR_NODE            0
+#define FE_EXTERNAL_BOUNDARY_NODE  -1
+#define FE_INTERNAL_BOUNDARY_NODE  -2
+
+#define MESH_PARTITION_NODE     10
+
+#define MESH_PERIODIC_NODE      20
+
+/* Finite element mesh file's family*/
+
+#define MESH_FAMILY_UNKNOWN  -1
+#define MESH_FAMILY_MODULEF   0
+#define MESH_FAMILY_TRIGRID   1
+#define MESH_FAMILY_TRIANGLE  2
+#define MESH_FAMILY_QUODDY    3
+#define MESH_FAMILY_GOM       4
+
+#endif

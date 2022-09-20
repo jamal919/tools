@@ -1,0 +1,20 @@
+
+# GET GLOSS DATABASE with the date of the copy
+fleury@legos<pc-fleury> : rsync -pr /data/soa/niveau_mer/gloss/data/hourly/ fles@nuwa.aero.obs-mip.fr:/gsa/fles/gloss/hourly-20130416/origin/
+
+
+# TEST ONCE
+./objects/detidor /gsa/fles/gloss/hourly-20130416/origin/h705.dat -step 1y -spectrum /gsa/fles/ondes/ondes65.dut -tides /raid1/ocean/data/tides/FES2004/netcdf/WAVE.tide.nc -context ctoh -s 2010 -f 2010
+
+#/home2/fles/tugo/src/tools/objects/detidor /gsa/fles/gloss/hourly-20130416/origin/h705.dat -s 2010 -f 2012 -step 1y -spectrum /gsa/fles/ondes/ondes65.dut -tides /raid1/ocean/data/tides/FES2004/netcdf/WAVE.tide.nc -context ctoh
+
+-> outputs in :
+/gsa/fles/gloss/hourly-20130416/origin/../analysis.ondes65.FES2004.01y/
+
+
+# MAKE ALL !
+
+
+# 
+
+/home2/fles/tugo/src/tools.poc/objects/extract-nf-v1 -i /gsa/fles/gloss/hourly-20130416/analysis.ondes65.FES2004.01y/stations_list -s 3600 -cm -r /home/fles/tugo/data/archives/global-MR/ -start 01/2001 -end 02/2001

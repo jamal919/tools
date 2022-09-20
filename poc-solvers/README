@@ -1,0 +1,82 @@
+Description
+===========
+
+The poc-solvers are an interface to many other solvers and are used by the SIROCCO tools and TUGOm.
+They are a part of the French national COMODO (community developments for ocean modeling) initiative.
+
+SIROCCO is funded by INSU and Observatoire Midi-Pyrénées/Université Paul Sabatier
+and receives project support from CNES, SHOM, IFREMER and ANR.
+
+For more information about SIROCCO, please e-mail sirocco@aero.obs-mip.fr .
+
+The license is GPLv2. Please see the LICENSE file for details.
+The poc-solvers use external GPL- or CeCILL-C-licensed scientific codes:
+MUMPS, PaStiX, HIPS and SuiteSparse among others.
+
+How to acknowledge
+==================
+
+If you use the poc-solvers for your own software, i.e. not through the SIROCCO tools or TUGOm,
+please acknowledge use of the poc-solvers with:
+  " The poc-solvers are developed and maintained by the SIROCCO national service (CNRS/INSU).
+  SIROCCO is funded by INSU and Observatoire Midi-Pyrénées/Université Paul Sabatier
+  and receives project support from CNES, SHOM, IFREMER and ANR. "
+
+Dependencies
+============
+
+The poc-solvers need:
+- bash, wget, ed, automake, g++, gfortran, cmake 2.8 or above
+- the development files for lapack and suitesparse
+- optionally the development files for scotch, for TUGOm to run faster
+- and, if you want to use these with TUGOm, the development files for arpack or parpack
+to compile.
+
+If you have openSUSE, you may need to run the following command :
+  sudo zypper addrepo http://download.opensuse.org/repositories/science/openSUSE_`lsb-release -sr`/science.repo
+and also see http://software.opensuse.org/search for other repositories.
+
+If:
+- you do not have administrator privileges
+- or you can not wait for your administrator
+  to install the dependencies from your distribution,
+user installation instructions for the dependencies are in the DEPENDENCIES_NOT_ROOT.rst file.
+
+How to build
+============
+
+If you have installed some dependencies from source, make sure you have
+LD_LIBRARY_PATH and CMAKE_INCLUDE_PATH environment variables set properly!
+
+If you have at least suitesparse and scotch in the optional dependencies, run :
+  > ./INSTALL.sh
+This will compile and install the poc-solvers in this directory. Also,
+if you do not have pastix, another dependency, this will do the following beforehand :
+- download it in the parent directory. Make sure your proxy is properly configured!
+- create a pastix config file in the parent directory, if it does not exist already, and ask you if you are happy with it.
+  - if you have several libscotch.so or several scotch.h in /usr, you will have to choose one of them: the simplest is usually the best.
+- compile pastix in a parallel directory
+
+If you want to tune the behaviour of this script, run :
+  > ./INSTALL.sh -h
+to see its documentation.
+For example, if the default options fail and you do not want to run TUGOm,
+you should run :
+  > ./INSTALL.sh -1
+
+If you do not have even suitesparse, make sure you also have
+CMAKE_LIBRARY_PATH environment variable set to LD_LIBRARY_PATH environment variable,
+then run :
+  > mkdir cmade
+  > cd cmade
+  > cmake ../src
+  > cd ..
+
+How to update
+=============
+
+Once you have modified or updated your sources, update the binaries with:
+  > make -C cmade install
+If this fails, remove the build and install directory with:
+  > rm -r cmade
+then revert to the full build.

@@ -1,0 +1,52 @@
+
+###########################################################
+# ENABLE make bundles HGBD=../customBundleDir
+# to make all relevant bundles : 
+#   for t in `hg tags|cut -f 1 -d \ `;do
+#     [ $t = tip ] && continue
+#     [[ $t =~ ^[0-9]+$ ]] && continue
+#     p=`hg parent -r$t --template "{latesttag}"`
+#     [ $p = null ] && continue
+#     [[ $p =~ ^[0-9]+$ ]] && continue
+#     make bundles tag=$t 
+#     done
+
+HGBD = ..
+
+override lastTag:= $(shell hg log -r tip --template "{latesttag}\n")
+tag:= $(lastTag)
+override B4Tag:= $(shell hg parent -r$(tag) --template "{latesttag}\n")
+
+# bundles that are made
+tagged = $(HGBD)/$(PACKAGE)-$(tag).hg_bundle
+B4Tagged = $(HGBD)/$(PACKAGE)-$(B4Tag).hg_bundle
+B4Tagged2Tagged = $(HGBD)/$(PACKAGE)-$(B4Tag)-$(tag).hg_bundle
+last2Tip = $(HGBD)/$(PACKAGE)-$(lastTag)-tip.hg_bundle
+# old bundle that gets cleaned-up
+B4Tagged2Tip = $(HGBD)/$(PACKAGE)-$(B4Tag)-tip.hg_bundle
+
+$(B4Tagged2Tagged):
+	hg bundle --base $(B4Tag) -r $(tag) $@
+
+$(last2Tip): FORCE
+	hg bundle --base $(lastTag) $@
+	ls -ld $@
+FORCE:
+
+$(tagged):
+	hg bundle -a -r $(tag) $@
+
+$(B4Tagged):
+	hg bundle -a -r $(B4Tag) $@
+
+bundles: $(B4Tagged) $(B4Tagged2Tagged) $(tagged) $(last2Tip)
+	$(RM) $(B4Tagged2Tip)
+
+# usefull for a website
+$(HGBD)/.tags.js: .hgtags Makefile.hgftp
+	hg tags|sed -e 's/ .*//;s/^/"/;1 s/^/tags=[/;s/$$/",/;$$ s/$$/"null"];/;' >$@
+
+# THIS IS EXPERIMENTAL AND WILL FAIL AT THE NEXT TAG CHANGE
+hgftppull: FORCE
+	lftp -c 'lcd ..;cd ftp://ftp.legos.obs-mip.fr/pub/ecola/$(PACKAGE);mirror -I *-tip.hg_bundle'
+	hg unbundle ../$(PACKAGE)-*-tip.hg_bundle

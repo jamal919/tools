@@ -1,0 +1,551 @@
+\documentclass[11pt]{article} % current 
+% landscape option only works with `dvips -Ppdf -t landscape *.dvi`
+% but is not necessary (see below)
+% for D in /usr/share/{texmf/doc,doc/{texlive-doc,tetex-*}}/latex;do [ -d $D ]&&break;done;echo $D
+% kde-open $D/*/latex2e.pdf
+% compile with Kile (Alt+6,Alt+7), Texmaker, or the following commands:
+%  f=
+%  pdflatex -interaction nonstopmode $f |grep 'No file'
+%  bibtex ${f/%.tex}
+% update template with
+%  vd $f ~/bin/templates/2cols.tex
+
+% ./fancyhdr/fancyhdr.pdf, fig.1
+\iftrue %landscape
+\setlength{\paperheight}{210mm}\setlength{\paperwidth}{297mm}
+\setlength{\textheight}{170mm}\setlength{\textwidth}{257mm}
+\else %portrait
+\setlength{\paperheight}{297mm}\setlength{\paperwidth}{210mm}
+\setlength{\textheight}{257mm}\setlength{\textwidth}{170mm}
+\fi
+\setlength{\voffset}{-5.4mm}\setlength{\hoffset}{\voffset}
+\setlength{\topmargin}{0mm}\setlength{\headheight}{0mm}\setlength{\headsep}{0mm}
+\setlength{\evensidemargin}{0mm}
+\setlength{\oddsidemargin}{\evensidemargin}
+\setlength{\columnsep}{10mm}
+\def\gobble#1{}
+\providecommand{\showlength}[1]{\expandafter\gobble\string#1 = \the#1 \par}
+\providecommand{\showpagelengths}{
+ \showlength{\paperheight}
+ \showlength{\voffset}
+ \showlength{\topmargin}
+ \showlength{\headheight}
+ \showlength{\headsep}
+ \showlength{\textheight}
+ \showlength{\footskip}
+ \showlength{\paperwidth}
+ \showlength{\hoffset}
+ \showlength{\oddsidemargin}
+ \showlength{\textwidth}
+ \showlength{\columnsep}
+ \showlength{\marginparsep}
+ \showlength{\marginparwidth}
+ \showlength{\marginparpush}
+ }
+\iffalse
+\pagestyle{empty}
+\setlength{\voffset}{-25.4mm}\setlength{\hoffset}{\voffset}
+%\setlength{\paperheight}{420mm}\setlength{\paperwidth}{297mm} % http://en.wikipedia.org/wiki/ISO_216
+\setlength{\textheight}{\paperheight}\setlength{\textwidth}{\paperwidth}
+\fi
+
+\usepackage[utf8]{inputenc} % ./base/inputenc.pdf ./base/utf8ienc.pdf
+\usepackage[british]{babel}
+\usepackage[T1]{fontenc}
+
+\usepackage[noblocks]{authblk} % ./preprint/authblk.pdf
+
+\usepackage[sort&compress,semicolon]{natbib} % $D/natbib/natbib.*
+\bibliographystyle{plainnat} % ./natbib/natbib.*, §2.1
+
+\setlength{\unitlength}{1mm}
+\usepackage{graphicx} % ./graphics/graphicx.pdf
+\usepackage{subfig} % ./subfig/subfig.*
+\usepackage{color} % \usepackage[monochrome]{color} % for B&W
+\definecolor{dred}{rgb}{.5,0,0}
+\definecolor{dgreen}{rgb}{0,.5,0}
+\definecolor{dblue}{rgb}{0,0,.5}
+\newcommand{\R}[1]{\color[rgb]{.5,0,0}{#1}}
+\renewcommand{\topfraction}{1.0} \renewcommand{\bottomfraction}{1.0} \renewcommand{\textfraction}{0} % \renewcommand{\floatpagefraction}{1.0} % for floats to fit on the page. See ./graphics/epslatex.ps
+% $D/../generic/pstricks/pstricks-doc.pdf
+\newcommand{\fref}[1]{fig.~\ref{#1}}
+\newcommand{\Fref}[1]{Fig.~\ref{#1}}
+\newcommand{\namedFig}[2]{\includegraphics[width=\linewidth]{#1}\caption{#2}\label{#1}}
+\newcommand{\namedPng}[2]{\includegraphics[width=\linewidth,viewport=0 0 600 600]{#1.png}\caption{#2}\label{#1}}
+
+\usepackage{amsmath} % $D/amsmath/amsldoc.pdf $D/../fonts/amsfonts/amsfndoc.pdf
+\usepackage{amssymb} % $D/../fonts/amsfonts/amssymb.pdf
+\usepackage{stmaryrd} %\shortleftarrow. $D/../fonts/stmaryrd/stmaryrd.dvi
+%\newenvironment{eqac}{\begin{subequations}\begin{gather}}{\end{gather}\end{subequations}}%centred. BUGS
+%\providecommand{\gather}[1]{\begin{gather}#1\end{gather}}%centred. BUGS
+\providecommand{\seq}[1]{\begin{subequations}#1\end{subequations}}
+\providecommand{\eqc}[1]{\begin{gather}#1\end{gather}}%centred
+\providecommand{\eqa}[1]{\begin{eqnarray}#1\end{eqnarray}}%tabled
+\providecommand{\seqa}[1]{\seq{\eqa{#1}}}
+\providecommand{\seqal}[2]{\seq{\label{#1}\eqa{#2}}}
+\providecommand{\seqc}[1]{\seq{\eqc{#1}}}
+\providecommand{\seqcl}[2]{\seq{\label{#1}\eqc{#2}}}
+\providecommand{\abs}[1]{\left| #1 \right|}
+\providecommand{\mean}[1]{\overline{\overline{#1}}}
+\providecommand{\eqb}[1]{\left\lbrace\begin{matrix}#1\end{matrix}\right.}
+\providecommand{\sqb}[1]{\left[#1\right]}%square brackets
+\providecommand{\rdb}[1]{\left(#1\right)}%round brackets
+\providecommand{\bm}[1]{\sqb{\begin{matrix}#1\end{matrix}}}
+\providecommand{\sbm}[1]{\sqb{\begin{smallmatrix}#1\end{smallmatrix}}}
+\DeclareMathOperator{\asin}{asin}
+\providecommand{\partialfrac}[2]{\frac{\partial #1}{\partial #2}}
+\DeclareMathOperator{\D}{D\!}
+\renewcommand{\vec}{\overrightarrow} % because of a bug in arev package
+\providecommand{\var}{\widetilde}
+\providecommand{\va}[1]{\left(\widehat{#1}\right)} % vector angle
+\providecommand{\m}[1]{\mathbf{#1}}
+\providecommand{\e}[1]{e^{#1}}
+\providecommand{\E}[1]{\negmedspace\cdot\negmedspace10^{#1}}
+\providecommand{\SI}[1]{\mathrm{\,#1}}
+\providecommand{\spacedtext}[1]{\quad\text{#1}\quad}
+\providecommand{\leqref}[1]{eq.~\eqref{#1}}
+\providecommand{\leqsref}[1]{eqs.~\eqref{#1}}
+\renewcommand{\div}{\nabla\cdot}
+\providecommand{\rot}{\nabla\times}
+
+\usepackage{listings}
+\usepackage{multicol}
+\lstset{basicstyle=\ttfamily,breaklines=true,breakautoindent=false,breakindent=0pt,frame=single}
+\providecommand{\code}[1]{\hbox{\lstinline|#1|}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \cmdhelp AND \cmdoutput ARE DETECTED BY THE Makefile TO PRODUCE THE RELEVANT SOURCES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\providecommand{\cmdhelp}[1]{\end{multicols}\lstinputlisting[caption=output of \code{#1 --help},label=l:#1_-h]{#1_-h}\begin{multicols}{2}}
+\providecommand{\cmdoutput}[1]{\end{multicols}\lstinputlisting[caption=output of \code{#1},label=l:#1_]{#1_}\begin{multicols}{2}}
+\newcommand{\lref}[1]{listing~\ref{#1}}
+
+\newenvironment{itemize*}%
+{\begin{itemize}%
+  \setlength{\itemsep}{0pt}%
+  \setlength{\topsep}{0pt}%
+  \setlength{\partopsep}{0pt}%
+  }%
+{\end{itemize}}
+
+\usepackage{longtable}
+
+\usepackage[pdftex,backref,pdfborder={0 0 0.5},breaklinks]{hyperref} % [backref]%for entries in the bibliography ./hyperref/manual.pdf
+\hypersetup{pdftitle={TTB},pdfauthor={DJ Allain}} % ./hyperref/manual.pdf % these options only work with `sed -re '/^ +\/\S+ +\(.*?\)/ d' -i *.ps`
+%\usepackage{breakurl}%make URLs breakable (but usable only on PDFs) ./breakurl/breakurl.pdf
+\usepackage[printonlyused]{acronym} % [printonlyused] ./acronym/acronym.*
+\iftrue %show list of acronyms
+\providecommand{\acroitem}{\acro}
+\providecommand{\acroend}{}
+\else
+\providecommand{\acroitem}[1]{\acrodef}
+\providecommand{\acroend}{\item}
+\fi
+\usepackage[nottoc]{tocbibind}% add bib to toc ./tocbibind/tocbibind.*
+
+%% MISCELLANEOUS
+\providecommand{\eg}{e.g.\ }
+\providecommand{\ie}{i.e.\ }
+\providecommand{\vs}{vs.\ }
+\iftrue
+\providecommand{\mynote}[1]{{\color[rgb]{1,.4,0}\sffamily\bfseries[~#1~]}}%
+\else
+\providecommand{\mynote}[1]{}%
+\fi
+
+\providecommand{\admittanceWarning}{There are issues with the admittance method, see \ref{s:admittance} and \ref{s:waveTypes}!}
+
+\begin{document}
+\sloppy
+
+\title{TUGOm Tidal ToolBox}%see also pdftitle above
+
+\author[1,2]{Damien J. Allain}
+%\author[2,3]{Co Author}
+\affil[1]{from 2010 to 2015: CNRS, LEGOS (UMR5566 CNRS-CNES-IRD-UPS), France}% Règlement intérieur du LEGOS, §4.2
+\affil[2]{since 2015: CNES/CLS, LEGOS (UMR5566 CNES-CNRS-IRD-UPS), France}% Règlement intérieur du LEGOS, §4.2
+%\affil[2]{Sth,Swh,Country}
+%\affil[3]{Sth else,Swh else,Country}
+
+\maketitle
+
+\begin{multicols}{2}
+
+\tableofcontents
+
+\section*{Acronyms}
+\begin{acronym}
+\setlength{\itemsep}{0pt}%
+\setlength{\parskip}{0pt}%
+\acroitem{IHO}{International Hydrographic Organization}
+\acroitem{TTB}{Tidal ToolBox}
+\acroitem{SSH}{Sea Surface Height}
+\end{acronym}
+
+\section{Tidal waves}
+
+\subsection{Naming conventions}
+
+The \ac{TTB} follows the Darwin convention, described in \citet[§74-79]{TidalAnalysisAndPrediction}.
+It takes its list of waves from \citet[Tab. 2]{TidalAnalysisAndPrediction}.
+The Darwin spectrum needs a 1 year analysis to be complete.
+
+There is also the Doodson convention.
+A list of waves with their Doodson number is available from the \ac{IHO} at
+\url{http://www.iho.int/mtg_docs/com_wg/IHOTC/IHOTC_Misc/TWLWG_Constituent_list.pdf}.
+The Doodson spectrum needs an 18 year analysis to be complete.
+
+\mynote{More on Doodson numbers}
+
+\subsection{Types of waves}\label{s:waveTypes}
+
+One would say there are 3 types of waves.
+
+\paragraph{Astronomic waves}
+are generated by the gravitational attraction of the Moon and the Sun.
+They have a non-zero astronomic potential.
+\mynote{More on astronomic potential}
+The biggest ones are : M2 K1 S2 O1 P1 N2 Mf K2 Mm Q1 Ssa,
+ but there are 38 registered by the \ac{TTB}.
+See the waves with a non-zero astronomic potential in \lref{l:showarg_}.
+
+\paragraph{Radiational waves}
+are generated by a cyclic geophysic phenomenom other than gravitational.
+For example, the Sun heats the ocean and the atmosphere, in particular the mesosphere, causing pressure variations at the sea level.
+This generates a strong S1, but also a lot of S2!
+One would consider the main radiational wave to be ... the mean level Z0, which is not really a wave, but is registered by the \ac{TTB}.
+
+\paragraph{Non-linear waves}
+are generated by the non-linear interaction of a couple of waves when they propagate together over small depths or high friction areas.
+A couple generates two other waves, whose frequencies are the sum and the subtraction of the originating waves.
+This mean a wave can have some regenerated components from the waves it has non-linearly produced, meaning {\bfseries all waves have a non-linear component!}
+The stronger the product of the amplitude of the originating waves, the stronger the amplitude of the generated waves, although the generated part of the waves will be weaker than originating waves.
+
+See the following horrifying examples.
+{\bfseries
+A wave belonging to all three types is S2, which is strongly astronomic, quite strongly radiational, and is the non-linear combination of, of course, S1+S1 and S3-S1, but also K1+P1 !
+The other horrifying combinations of astronomic waves contributing to a third astronomic frequency are K1+O1=M2 and M1+O1=N2.
+The subtractions are also of course true : K1=S2-P1, etc...
+This means, for example, that both K1 and P1 have a component from the non-linear interaction of the Solar-heat-generated S2 and one another!
+}
+All combinations of astronomic and strong radiational waves are listed with the \code{showarg --combinations} command.
+
+\subsection{The admittance method}\label{s:admittance}
+
+The oceans and seas have a fairly smooth response so can be approximated as linear.
+This means the ratio of the amplitude over the astronomic potential of astronomic waves can be interpolated from their neighbours.
+This is useful when going from the Darwin convention to the Doodson convention.
+For example, taking $\Pi$ the astronomic potential and $A$ the complex amplitude at a certain location,
+  we have the $P_1$ component from the nearest neighbour interpolation:
+$$A_{P_1}\approx\Pi_{P_1}\frac{A_{K_1}}{\Pi_{K_1}}$$
+or from the linear interpolation: 
+$$A_{P_1}\simeq\Pi_{P_1}\frac{\frac{A_{O_1}}{\Pi_{O_1}}\left(\omega_{K_1}-\omega_{P_1}\right)+\frac{A_{P_1}}{\Pi_{P_1}}\left(\omega_{P_1}-\omega_{O_1}\right)}{\omega_{K_1}-\omega_{O_1}}$$
+A spline interpolation can also be done when there are 3 known components.
+
+{\bfseries
+This only works for astronomic waves.
+So it will of course fail if the astronomic waves are contaminated by strong non-linear components.
+So the input waves must be strongest in their category: only M2, K2, N2, K1, O1, Q1, Mf, Mm and Mtm should be allowed as input!
+Do see the end of \ref{s:waveTypes} for the horrifying examples!
+THE MORE NON-LINEAR AND MIXED SEMIDIURNAL THE ZONE IS, THE LESS RELIABLE THE ADMITTANCE METHOD IS.
+S2 has got a strong radiative component, so
+DO NOT PUT S2 IN THE LIST OF WAVES UNLESS YOU ARE AWARE OF WHAT RISKS YOU ARE TAKING.
+}
+
+\subsection{Wave list}\label{s:list}
+
+You can have almost all the information you need about waves with the \code{showarg} command.
+Its help is shown on \lref{l:showarg_-h}.
+\cmdhelp{showarg}
+
+Without arguments, it shows the list of waves known by the \ac{TTB}, with their name, astronomic potential, pulsation and period in various units, critical latitude and Doodson number as shown on \lref{l:showarg_}.
+\cmdoutput{showarg}
+
+It otherwise shows information about wave separation, which is important when doing harmonic analysis.
+An example is shown in \ref{s:analysis}.
+
+\section{Detiding}
+
+Tides induce mixing in the ocean layers on high continental shelves or on continental margins.
+So most models of the ocean take into account the tides.
+However, when you are interested in, for example, \ac{SSH} variations ($<0.1m$) induced by the weather or the circulation, the tides ($>1m$) will just drown what you want to observe.
+\mynote{Show one example of drowned SSH}
+Thankfully, as the tidal spectrum has very sharp components, it is fairly easy to filter the tides out.
+
+This is done with the \code{comodo-detidor} command.
+Its help is shown on \lref{l:comodo-detidor_-h}.
+\cmdhelp{comodo-detidor}
+
+It always carries out a harmonic analysis.
+Unless requested not to do so by the \code{--only-atlases} option,
+it calculates a prediction from the amplitudes and phases of the analysed waves and subtracts it from the input to obtain a detided output.
+
+\subsection{Harmonic analysis}\label{s:analysis}
+
+It is possible to get amplitudes and phases of waves from a signal $ \left[ h_t \right] $ from:
+\begin{eqnarray}
+\left[ \nu_n e^{j\left(\omega_n t + \phi_n\right)} \right] \left[ x_n \right] &=& \left[ h_t \right] \\
+\left[ \nu_n e^{j\left(\omega_n t + \phi_n\right)} \right]^* \left[ \nu_n e^{j\left(\omega_n t + \phi_n\right)} \right] \left[ x_n \right] &=& \left[ \nu_n e^{j\left(\omega_n t + \phi_n\right)} \right]^* \left[ h_t \right] \label{e:analysis}
+\end{eqnarray}
+with:
+\begin{itemize}
+\item $ t $ the time since the reference
+\item $ \nu_n $ a complex number giving the nodal correction (in amplitude and in phase)
+\item $ w_n $ the pulsation of the wave
+\item $ \phi_n $ the astronomic angle of the wave
+\item $ \m{A} \equiv \left[ \nu_n e^{j\left(\omega_n t + \phi_n\right)} \right]^* \left[ \nu_n e^{j\left(\omega_n t + \phi_n\right)} \right] $ the harmonic matrix
+\item $ \m{b} \equiv \left[ \nu_n e^{j\left(\omega_n t + \phi_n\right)} \right]^* \left[ h_t \right] $ the right-hand side vector
+\item $ \m{x} \equiv \left[ x_n \right] $ the harmonic coefficients
+\end{itemize}
+The modulus and argument of $ x_n $ are respectively the amplitudes and phases of the analysed waves.
+
+$\m{x}$ is obtained with a simple invertion of \eqref{e:analysis}.
+
+\subsubsection{Issues}
+
+Two waves are poorly separated when they are so close in frequency $f$ that they have numbers of periods $Tf$ over the period $T$ of the time series that differ by less than 1:
+$$T\abs{f_1-f_2}<1$$
+This makes $\m{A}$ singular.
+These waves are then unresolved.
+The \code{showarg} command can be used to check if waves are separated over an analysis period.
+The separation period of two waves is
+$$\abs{f_1-f_2}^{-1}$$
+and can be calculated by \code{showarg} followed by the list of waves.
+When you specify the period of your analysis, \code{showarg} will only show you the couples of unresolved waves whose separation period is more than half of the analysis period.
+For example, \lref{l:showarg:separation} shows you that
+  {\bfseries an analysis period of 10 days is way too short for just about anything}.
+\begin{lstlisting}[caption=extract of the output of \\ \code{showarg -s 01/01/2012 -f 11/01/2012 K1 O1 M2 S2},label=l:showarg:separation]
+----------------------separations above 5 days
+wave:       K1       O1, separation:    13.661 days 
+wave:       M2       S2, separation:    14.765 days 
+\end{lstlisting}
+
+As a general rule,
+  an analysis over a long period and with as few waves as possible gives good atlases, and
+  an analysis over a short period and with as many waves as possible gives a properly detided output,
+  but short periods are not very compatible with high number of close waves.
+{\bfseries
+Also, with periods so short that important waves have a small and non-integer number of periods, these important waves will pollute the estimation of the other waves if they are not given in the list of waves to analyse.
+}
+
+If an unresolved wave is not astronomic, it can not be analysed with the admittance method and its column in $\m{A}$ is replaced with 0s but for its row, replaced with a 1, which takes this wave out of the equation.
+If an unresolved wave is astronomic, it can be analysed with the admittance method and its column in $\m{A}$ is replaced with weights calculated from the astronomic potential of the waves.
+{\bfseries
+\admittanceWarning{}
+It is still better to use the admittance method during the analysis than doing so later with \code{comodo-admittance}!
+}
+
+\subsection{Examples}\label{s:comodo-detidor-examples}
+
+The following command:
+\begin{lstlisting}
+comodo-detidor champs_Meteo.nc --only-atlases -v XE -d Q1 O1 P1 K1 N2 M2 S2 K2 L2 M4 MS4
+\end{lstlisting}
+\begin{itemize*}
+\item carries out a harmonic analysis on the data of the variable \code{XE} (option \code{-v})
+\item takes into account the following waves: Q1 O1 P1 K1 N2 M2 S2 K2 L2 M4 MS4 (option \code{-d})
+\item saves an atlas for each wave, whose name is the name of the wave followed by \code{-XE-atlas.nc} (option \code{-a} implied by option \code{--only-atlases})
+\end{itemize*}
+That's all (option \code{--only-atlases}).
+\mynote{Show at least one atlas}
+
+The following command:
+\begin{lstlisting}
+comodo-detidor champs_Meteo.nc -a -c control.dat -v XE -d Q1 O1 P1 K1 N2 M2 S2 K2 L2 M4 MS4
+\end{lstlisting}
+does the same as the previous command. It additionally:
+\begin{itemize*}
+\item saves the detided \code{XE} in \code{detided-XE-champs_Meteo.nc} as variable \code{XE_detided}
+\item reads the coordinates of the control points from \code{control.dat} (option \code{-c}) and saves harmonic constants, time series, signal spectrum and residual spectrum to, respectively, \code{constants-XE-*.txt}, \code{series-XE-*.txt}, \code{signal-fft-XE-*.txt} and \code{residuals-fft-XE-*.txt}, with \code{*} the index of the control point in the grid.
+\end{itemize*}
+The detiding requires reading the input twice, so this command takes almost twice as long as the previous one.
+\mynote{Show one example of cleaned-up SSH}
+
+\section{Completing atlases with the admittance method}
+
+You may end up with atlases that lack a certain number of weak but important astronomic waves, most often for two reasons:
+  the model was not forced with these waves
+  or they were forgotten when making the list for the harmonic analysis (see the end of \ref{s:analysis}).
+You may then redo your analysis, which can take some time, or your model, which will take a lot of time, or rather interpolate the missing waves with the admittance method, described in \ref{s:admittance}, which will take a very small amount of time.
+{\bfseries \admittanceWarning}
+
+This is done with \code{comodo-admittance}.
+Its help is shown on \lref{l:comodo-admittance_-h}.
+\cmdhelp{comodo-admittance}
+
+Say for example L2 was forgotten when forcing the model.
+Its atlas (see \ref{s:comodo-detidor-examples}) would show ridiculously small amplitudes and dubious phases only due to bad separation with the non-linear NKM2.
+The following command would give you better values from the atlases of N2, M2 and K2:
+\begin{lstlisting}
+comodo-admittance -a WAVE-XE-atlas.nc -v XE_a XE_G N2 M2 L2 K2
+\end{lstlisting}
+The order with which the waves are given is irrelevant:
+  only the waves for which the atlases are missing will be interpolated.
+\mynote{Show both analysed and interpolated atlases}
+
+\section{Interpolation and prediction}
+
+This is done with \code{predictor}.
+Its help is shown on \lref{l:predictor_-h}.
+\cmdhelp{predictor}
+
+Say for example you want to predict the tides at 2 points, one in the Mont St Michel Bay at 49N 2W, and one in the middle of the Bay of Biscay at 45N 5W, during Jan 2000.
+You then need to put the number of points to predict for and their latitude and longitude in a file, for example \code{control.dat}, as shown by \lref{l:list}.
+\begin{lstlisting}[caption=example list of control points,label=l:list]
+2
+49 -2
+45 -5
+\end{lstlisting}
+and run the following command:
+\begin{lstlisting}
+predictor -p control.dat -a WAVE-XE-atlas.nc -v XE_a XE_G -s 01/01/2000 -f 01/02/2000 -w Q1 O1 P1 K1 N2 M2 S2 K2 L2 M4 MS4
+\end{lstlisting}
+This will show you the constants for all waves on the screen
+  and produce \code{predictions.dat} (\lref{l:prediction}).
+%\end{multicols}
+\begin{lstlisting}[caption=first few line of \code{predictions.dat},label=l:prediction]
+#file produced with : predictor -p control.dat -a WAVE-XE-atlas.nc -v XE_a XE_G -s 01/01/2000 -f 01/02/2000 -w Z0 Q1 O1 P1 K1 N2 M2 S2 K2 L2 M4 MS4
+#time(days since 2000/01/01 00:00:00) time(human-readable) point0 point1
+0.00000 2000/01/01_00:00:00 1.02995 0.918104
+0.04167 2000/01/01_01:00:00 1.84631 0.657546
+0.08333 2000/01/01_02:00:00 2.20802 0.227027
+0.12500 2000/01/01_03:00:00 2.06563 -0.262829
+0.16667 2000/01/01_04:00:00 1.45274 -0.689614
+0.20833 2000/01/01_05:00:00 0.486658 -0.948384
+0.25000 2000/01/01_06:00:00 -0.627089 -0.975137
+\end{lstlisting}
+%\begin{multicols}{2}
+As the output is in ascii, you can then easily plot the results, for example with \code{gnuplot} (\lref{l:gnuplot}).
+\begin{lstlisting}[caption=\code{gnuplot} commands for \code{predictions.dat},label=l:gnuplot]
+set xlabel 'days since 2000/01/01 00:00'
+plot 'predictions.dat' u 1:3 w l t 'Mt St Michel',\
+  '' u 1:4 w l t 'Bay of Biscay'
+\end{lstlisting}
+
+\section{Energy budget}
+
+This is a diagnosis tool for modellers.
+The energy budget is calculated with the \code{comodo-energy} command from tidal atlases.
+The help of this command is shown on \lref{l:comodo-energy_-h}
+\cmdhelp{comodo-energy}
+
+\mynote{review this, especially the symbols}
+
+The scalar product of 2 complex vector is\,:
+\seqc{
+ \spacedtext{with}z=x+jy=a\e{j\phi} \\
+ \overline{\overline{a_1\sqb{\e{j(\omega t+\phi_1)}+\e{-j(\omega t+\phi_1)}} a_2\sqb{\e{j(\omega t+\phi_2)}+\e{-j(\omega t+\phi_2)}}}} \\
+ = a_1 a_2\sqb{\e{j(\phi_1-\phi_2)}+\e{-j(\phi_1-\phi_2)}}
+ = a_1 a_2\cos(\phi_1-\phi_2) \\
+ = \Re{\left(z_1\overline{z_2}\right)}
+ = x_1 x_2 + y_1 y_2 \\
+ \equiv z_1 \cdot z_2
+ }
+
+It calculates Stokes transport $S$ with:
+\begin{gather}
+\overrightarrow{S} = \eta \cdot \overrightarrow{u} \label{e:transport}
+\end{gather}
+As \eqref{e:transport} needs elevation and both speed components at the same location,
+and as \eqref{e:flux} also needs the depths at that location,
+the elevation and both speed components are interpolated at depth locations.
+It calculates energy flux $E$ with:
+\begin{gather}
+\overrightarrow{E} = \rho g h \overrightarrow{S} \label{e:flux}
+\end{gather}
+and dissipation rate with:
+\begin{gather}
+W = -\nabla\cdot \overrightarrow{E}
+\end{gather}
+Because it is obtained from a spatial derivation, it is not calculated for values at the boundary of the domain.
+\mynote{It should take into account astronomic forcing.}
+This shows why it is so unstable:
+  $$ W = -\rho g \sqb{ \rdb{\nabla h} \cdot \overrightarrow{S} + h \nabla \cdot \overrightarrow{S} } $$
+Also, it is taken for each wave separately, when all main waves should be taken simultaneously.
+Because of wave-to-wave non-linear energy transfers, it will be positive and negative, when it should only be negative.
+
+But thankfully, we have the 2D wave equation:
+\eqc{
+  \partialfrac{\eta}{t}+\nabla\cdot\rdb{H\vec{u}} =0
+  }
+which gives the dissipation from the pressure work:
+\eqc{
+  W_p=\rho g h (\nabla \eta) \cdot \vec{u}
+  }
+
+\iffalse
+It calculates $C_d$ with:
+\eqc{
+  C_d = \frac{W}{\abs{\m{u}}_{max} \mean{\abs{\m{u}}^2}} \\
+  C_d = \frac{W}{u \cdot \sqb{\abs{u}}u}
+  }
+\fi
+
+\section{Current ellipses}
+
+The direction and strength of the current when the phase of the force is 0 is simply the same as
+\begin{gather}
+\Re{\m{u}} \label{e:direction0}
+\end{gather}
+
+\iffalse
+Reminder:
+\begin{gather*}
+  \cos(a+b)=\cos a\cos b-\sin a\sin b\\
+  \sin(a+b)=\sin a\cos b+\cos a\sin b\\
+  2\cos a\cos b=\cos(a+b)+\cos(a-b)\\
+  2\sin a\sin b=-\cos(a+b)+\cos(a-b)\\
+  2\sin a\cos b=\sin(a+b)+\sin(a-b)
+\end{gather*}
+\fi
+
+We have the modulus of the current $\abs{\m{u}}$ from:
+\begin{eqnarray*}
+2\abs{\m{u}}^2
+  &=& U^2\sqb{1-\cos\rdb{2\omega t+2\phi_u}}+V^2\sqb{1-\cos\rdb{2\omega t+2\phi_v}} \\
+&=&U^2\sqb{1-\cos2\omega t\cos2\phi_u+\sin 2\omega t \sin 2\phi_u} \nonumber\\
+  && +V^2\sqb{1-\cos2\omega t\cos2\phi_v+\sin 2\omega t \sin 2\phi_v} \\
+&=&U^2+V^2 - \sqb{U^2\cos2\phi_u+V^2\cos2\phi_v}\cos2\omega t \nonumber\\
+ && +\sqb{U^2\sin2\phi_u+V^2\sin2\phi_v}\sin 2\omega t
+\end{eqnarray*}
+Taking
+\begin{gather*}
+u^2 = U^2\cos2\phi_u+jU^2\sin2\phi_u\\
+v^2 = V^2\cos2\phi_v+jV^2\sin2\phi_v\\
+d = u^2+v^2 = U^2\cos2\phi_u+V^2\cos2\phi_v+j\sqb{U^2\sin2\phi_u+V^2\sin2\phi_v}
+\end{gather*}
+gives
+\begin{eqnarray*}
+2\abs{\m{u}}^2 &=& U^2+V^2 - \Re \rdb{d e^{2j\omega t}} \\
+   &=& U^2+V^2 - \abs d\cos\rdb{2\omega t+\arg d}
+\end{eqnarray*}
+which gives the maximum current:
+\seqc{
+  \abs{\m{u}}_{max} = \sqrt{\frac{U^2+V^2+\abs d}{2}} \\
+  \spacedtext{at}
+    2\omega t=-\arg d
+    \Leftrightarrow \omega t=\phi_{M}=-\frac{\arg d}{2} \label{e:phase_of_maximum}
+  }
+and the minimum current:
+  $$\sqrt{\frac{U^2+V^2-\abs d}{2}}$$
+
+\eqref{e:phase_of_maximum} gives the direction of the maximum current:
+\seqc{
+\arg\sqb{\Re\rdb{u e^{-j\phi_M}}+j\Re\rdb{v e^{-j\phi_M}}} \\
+=\arg\sqb{U\cos\rdb{\phi_u-\phi_M}+jV\cos\rdb{\phi_v-\phi_M}}
+  }
+
+The polarisation is given with the sign of the vectorial product of the speed components:
+\seqc{
+  \Re \rdb u \Im \rdb v - \Im \rdb u \Re \rdb v
+  }
+with positive relating to anti-clockwise.
+
+This is done with the \code{ellipse} command.
+Its help is shown on \lref{l:ellipse_-h}.
+\cmdhelp{ellipse}
+
+\bibliography{literature}
+
+\end{multicols}
+
+\end{document}

@@ -1,0 +1,62 @@
+/*Definition des couleurs pour LGD          */
+
+#define CLR_LGD_REGULAR      10
+#define CLR_LGD_HIGHLIGHT    11
+
+#define LGD_CLR_NAME_BLACK    "black"
+#define LGD_CLR_NAME_WHITE    "white"
+#define LGD_CLR_NAME_RED      "red"
+#define LGD_CLR_NAME_BLUE     "blue"
+#define LGD_CLR_NAME_GREEN    "green"
+#define LGD_CLR_NAME_YELLOW   "yellow"
+#define LGD_CLR_NAME_GRAY     "gray"
+
+#define LGD_CLR_BLACK    0
+#define LGD_CLR_WHITE    1
+#define LGD_CLR_RED      2
+#define LGD_CLR_BLUE     3
+#define LGD_CLR_GREEN    4
+#define LGD_CLR_YELLOW   5
+#define LGD_CLR_GRAY     6
+
+#define LGD_CLR_NUMBER        7
+
+/*Definition des MESSAGE pour LGD          */
+
+#define LgdMSG_LOAD "Loading legend file..."
+#define LgdMSG_SAVE "Saving legend file..."
+
+#define LGD_STATUS_OK                     0
+#define LGD_STATUS_FILE_NOT_FOUND         1
+#define LGD_STATUS_READ_ERROR             2
+#define LGD_STATUS_WRITE_ERROR            3
+#define LGD_STATUS_END_OF_FILE            4
+#define LGD_STATUS_UNABLE_TO_OPEN         5
+
+#define LGD_STATUS_LEGEND_NOT_FOUND      10
+
+#define LGD_TEXT_SYMBOL  0
+#define LGD_SYMBOL       1
+#define LGD_TEXT         2
+#define LGD_GRAPH       10
+#define LGD_PROFILE     20
+
+#define LgdN_SHOW_LEGENDS         0
+#define LgdN_SHOW_SYMBOLS         1
+
+#define LgdN_SIZEABLE             5
+
+#define LgdN_FONT_SIZE            10
+#define LgdN_SYMBOLS_SIZE         11
+
+#define LgdN_MODIFIED            100
+
+
+
+
+#define LgdN_Char_Type         1000
+#define LgdN_Int_Type          1001
+#define LgdN_Float_Type        1002
+#define LgdN_Dble_Type         1003
+#define LgdN_String_Type       1004
+#define LgdN_Undefined_Type    9999

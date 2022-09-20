@@ -1,0 +1,63 @@
+%{
+#include <stdlib.h>
+#include "../config.h"
+
+#include "poc-data-operators.hpp"
+// see info:/bison/Value Type
+#define YYSTYPE poc_cdata_t
+
+#if AM_YPP_TARGET_IS_HPP
+#include "poc-formula-parse.hpp"
+#else
+#include "poc-formula-parse.h"
+#endif
+void yyerror(poc_deque_t<poc_cdata_t*> &vars,char *s);
+%}
+
+%%
+
+([0-9]+(\.[0-9]*)?|[0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?[ij]? {
+  int lastI=strlen(yytext)-1;
+  char last=yytext[lastI];
+  complex<double> z=atof(yytext);
+  
+  if(strchr("ij",last)!=0){
+    z=complex<double>(0.,z.real());
+    }
+  
+  yylval.info.clear();
+  yylval=z;
+  
+  return DOUBLE;
+  }
+
+\"[^\"]*\" {
+  yylval.info.name = yytext;
+  return STRING;
+  }
+
+[_A-Za-z][0-9_A-Za-z]* {
+  yylval.info.name = yytext;
+  return NAME;
+  }
+
+[-=?+*%/:^&|<>!(,)\[\]] { return *yytext; }
+
+[ \t\r] ;  /* skip whitespace */
+
+#[^\n;]* ;  /* comments */
+
+[\n;\0] { return EOL; }
+
+. { __ERR_BASE_LINE__("%d=='%c': unknown character\n",(int)*yytext,*yytext); }
+
+%%
+
+/* defining this because of compatibility issues between Flex versions */
+YY_BUFFER_STATE portable_yy_scan_bytes(const char *s,size_t l){
+  return yy_scan_bytes(s,l);
+  }
+
+int yywrap(void) {
+    return 1;
+}

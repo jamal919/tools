@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en-GB">
+<title>Notes about the tools</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<style><!--
+h1{text-align:center}
+h2,h3{margin:.5ex 0}
+h2{background-color:#ccf}
+h3{background-color:#8ff}
+div,fieldset,legend{border:thin solid black}
+fieldset.conditional,fieldset.conditional>legend{border-color:#c0c}
+fieldset.withLegend{border-width:2px}
+div,fieldset{padding:.5ex}
+legend{margin:0;margin-top:.5ex}
+code,pre{margin:0;white-space:pre-wrap;background-color:#ccc}
+pre{padding-left:1ex;text-indent:-1ex}
+div,fieldset,table{display:inline;vertical-align:text-top}
+table{border-collapse:collapse}
+table th,td{border:thin solid gray}
+table.either>tbody>tr>td{border:medium solid green}
+table.leastEvil{border-collapse:separate;border-spacing:0}
+table.leastEvil>tbody>tr>td{border:medium solid orange}
+table.leastEvil>tbody>tr>td+td{border:medium solid red}
+table.cmd td{padding:.5ex}
+--></style>
+
+<body>
+<a href=.>parent dir</a>
+<h1><script><!--
+document.write(document.title)
+--></script></h1>
+<!--
+##################### Notes on this document #####################
+Comments on this document are welcome. 
+It essentially shows which buttons to press.
+[What to fill the boxes with] is shown in square brackets.
+> echo 'Commands or text lines to set in config files are shown in gray'
+and so tend to be ‘file names’.
+<b>Do</b>
+[either
+either this
+,
+or this
+]
+.
+[leastEvil
+This alternative is bad.
+,
+This alternative is worse.
+] 
+
+man:/ and info:/ links are to be opened with ‘konqueror’ .
+
+
+##################### Download or update #####################
+with Mercurial http://www.mercurial-scm.org/
+[either
+<b>Clone the common depository</b> 
+Create a directory and go to it :
+>/home/softs/;p=tools-depot;mkdir ${p/-depot}/$p;${p/-depot}/$p/
+Download the latest working version by cloning the common depository to create your local depository :
+>hg clone ssh://srv-ecola//data/depository/src/${p/-depot}/$p .
+If your repository will have multiple committers :{
+  Follow http://www.mercurial-scm.org/wiki/MultipleCommitters#The_filesystem_method
+  <pre>
+  hg init
+  chmod -cR g+rX .
+  chmod -cR g+w .hg
+  find .hg -type d -exec chmod -c g+xs '{}' +
+  </pre>
+  If your committers have different Mercurial versions :{
+    Also follow http://www.mercurial-scm.org/wiki/UpgradingMercurial#Upgrading_and_downgrading_repository_formats :{
+      <b>2.1. Upgrading and downgrading repository formats</b> 
+      To upgrade, simply use ‘hg clone --pull’ with a new client.
+      To downgrade, use one of the following:
+      <b>You will need a version of Mercurial that can read the original depository.</b> 
+      For compatibility with hg < 1.7 (Nov 2010) :{
+        >hg clone --config format.dotencode=False --pull
+        }.
+      For compatibility with hg < 1.1 (Dec 2008) :{
+        >hg clone --config format.usefncache=False --pull
+        }.
+      For compatibility with hg < 0.9.4 (Jun 2007) :{
+        >hg clone --config format.usestore=False --pull
+        }. 
+      }.
+    }.
+  }.
+,
+<b>Update your local depository</b> 
+Go to the relevant directory :
+>p=tools-depot;/home/softs/${p/-depot}/$p/
+[
+If you have direct access to the common depository :{
+List changes on the common depository :
+>hg incoming
+Synchronise with the common depository (get the changes and apply them) :
+>hg pull -u
+}.
+,
+With a bundle :{
+Get the changes available in your bundle and apply them :
+>hg unbundle -u /where/there/is/the/bundle
+}.
+]
+Some programmes may change names, so clean up ignored files with :
+>rm `hg st -ni|grep -vE 'kdev4|.hgignore'`
+and empty directories with :
+>find */ -type d -empty -exec rmdir -vp --ignore-fail-on-non-empty '{}' +
+]
+##################### Build #####################
+
+Have a look at ./README.sh or at ./README.html
+
+##################### Documentation #####################
+Available in Doxygen format.
+<b>Create or update the documentation</b> with (Takes ~74s) :
+>p=tools-depot;/home/softs/${p/-depot}/$p/
+[either
+>doxygen
+<b>Browse it</b> from ./Doxygen/html/index.html
+>d=Doxygen
+,
+This causes less problems with ‘kdevelop’ :
+>{ cat Doxyfile;echo OUTPUT_DIRECTORY=.Doxygen; } | doxygen -
+<b>Browse it</b> from ./.Doxygen/html/index.html
+>d=.Doxygen
+] 
+For paper documentation :{
+  >{ cat Doxyfile;printf "%s\n" GENERATE_HTML=NO GENERATE_LATEX=YES OUTPUT_DIRECTORY=$d; } | doxygen -
+  >make -C $d
+  Then view ‘$d/latex/refman.pdf’
+  }. 
+
+If you want to export it to a web server :{
+Get the absolute path of the directory where the HTML files are :
+>h=`readlink -f $d/html`;echo $h
+Remove it from the content of all the HTML files :
+> sed -i -re 's|'$h'/||g' $h/*.html
+Ensure everybody has read access to it :
+> chmod -R go+rX $h/
+Transmit it :
+> rsync -av --delete $h/ user@server://path/to/Doxygen/html/
+}. 
+
+##################### Sending your changes #####################
+Make a bundle, for example with the commands below :
+>hgview;read b;f=`hg root`;f=${f/*\/};_ hg bundle --base $b $f-$b-`hg tip --template '{rev}'`.hg-bundle
+
+--><span class=tofill></span>
+
+<script><!--
+var i,nodes=document.getElementsByClassName('tofill');
+function max(a,b){return a>b?a:b}
+function charRef(ch){return '&#'+ch.charCodeAt()+';'}
+for (i=0;i<nodes.length;i++){node=nodes[i];
+ node.innerHTML=node.previousSibling.textContent
+  .replace(/ *\[([a-z]+)?\n/ig,'<table class=$1><tr><td>\n')
+   .replace(/\n *,\n/g,'\n<td>\n')
+   .replace(/\n *;\n/g,'\n<tr><td>\n')
+   .replace(/\n *\]/g,'\n</table>')
+  .replace(/##+ +(.*) +##+\n/g,'<h2>$1</h2>\n')
+  .replace(/\n#(.*)\n/g,'\n<h3>$1</h3>\n')
+  .replace(/(\n *(with|for|if)?.*?) \:\{/ig,function(m,legend,conditional){return '\n'+
+   '<fieldset class="withLegend'+(conditional?' conditional':'')+'">'+
+   '<legend><b>'+legend.replace(/_/g,'&#95;')+'\n</b></legend>'})
+   .replace(/\}\.([ ,\n])/g,'</fieldset>$1')
+  .replace(/(^ *)<pre>\n((?:.*\n)*?)^ *<\/pre>\n/gm,function(m,i,t){return t.replace(RegExp("^"+i,"gm"),"$&>")}) //file content //RegExp("^(?:"+i+"|$)","gm")
+  .replace(/^ *> *$/mg,'<pre>\n </pre>')
+  .replace(/^ *> ?(.+)/mg,function(m,c){return '<pre>'+c.replace(/[\.:_\[\]]/g,charRef)+'</pre>'})
+  //.replace(/\[[^\]]+\]/g,function(m){return m.replace(/_/g,charRef)})
+  .replace(/\[([^\]]*)\]/g,function(m,v){return '<input type=text value="'+v.replace(/[_\/:]/g,charRef)+'" size='+max(v.length,1)+' />'})
+  .replace(/‘([^’]+)’/g,function(m,c){return '<code>'+c.replace(/[\.:]/g,charRef)+'</code>'})
+  .replace(/((?:(?:https?|file|man|info):|\.\.?\/)[^ \n\]<>]+)/g,'<a href="$1">$1</a>')
+  .replace(/(<(code|pre|a)[^>]*>)(.*?)(<\/\2>)/g,function(m,tag,tagName,c,endTag){return tag.replace(/_/g,'%5f')+c.replace(/[\{\}_<>:]/g,charRef)+endTag})
+  .replace(/_(.)/g,'<u>$1</u>')
+  .replace(/\{/g,'<fieldset>').replace(/\}/g,'</fieldset>') .replace(/(<\/fieldset>),/g,'$1 ')
+  .replace(/->/g,'<b> → </b>')
+  .replace(/([^>])\n/g,'$1<br>\n').replace(/\n\n/g,'\n<br>\n')
+  ;
+ }
+/**/
+--></script>

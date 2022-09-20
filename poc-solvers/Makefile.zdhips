@@ -1,0 +1,427 @@
+
+.PHONY: all libs includes help clean FORCE print
+
+all: libs includes
+
+libs: dhips/LIB/libhips.a zhips/LIB/libhips.a
+
+includes: dhips/LIB/dhips.h zhips/LIB/zhips.h
+
+###############################################################################
+# help and default option
+
+help:
+	@printf '%s\n' \
+	  'make [VAR=VALUE ...]' \
+	  'VARs:' \
+	  '  OPTFLAGS  Set to -g for debug. Default: -O3 .' \
+	  '  SCOTCHINCDIR  Where to find scotch.h . Default: /usr/include .'
+	  '  SCOTCHLIBDIR  Where to find libscotch.* . Default: /usr/lib64 .'
+
+OPTFLAGS := -O3
+SCOTCHINCDIR := /usr/include
+SCOTCHLIBDIR := /usr/lib64
+
+###############################################################################
+# translation options
+
+# command for following template :
+# > make ...;echo -ne '\e]2;pret!!!\a';read
+# template :
+# # > echo `make |& sed -re "s/.*//;t;d" |sort -u`
+# from_ := 
+
+# # > echo `find hips -name \*.c -exec perl -e '$_=join"",<>;s/,\s*\n\s*/, /gm;print join"\n",/[A-Za-z]\w*[ *]+([A-Za-z]\w*)\s*\((?:INTS id|.+, *COEF).*/g' "{}" + |sort -u`
+# from_code :=
+
+# # > echo `make |& sed -re "s/.*undefined reference to .[zd](.*)'/\1/;t;d" |sort -u`
+# from_ld1 :=
+
+# # > echo `make |& sed -re "s/.*multiple definition of .(.*)'/\1/;t;d" |sort -u`
+# from_ld2 :=
+
+# > echo `make |& sed -re "s/.*error: .*enum.*(HIPS_.*)’/\1/;t;d" |sort -u`
+from_cc := HIPS_AMALG HIPS_ASSEMBLY_ADD HIPS_ASSEMBLY_FOOL HIPS_ASSEMBLY_MODE HIPS_ASSEMBLY_OP HIPS_ASSEMBLY_OVW HIPS_ASSEMBLY_RESPECT HIPS_BLOCK HIPS_CHECK_GRAPH HIPS_CHECK_MATRIX HIPS_COARSE_GRID HIPS_DIRECT HIPS_DISABLE_PRECOND HIPS_DOF HIPS_DOMNBR HIPS_DOMSIZE HIPS_DROPSCHUR HIPS_DROPTOL0 HIPS_DROPTOL1 HIPS_DROPTOLE HIPS_DUMP_CSR HIPS_ERR_ALLOCATE HIPS_ERR_CALL HIPS_ERR_CHECK HIPS_ERR_IO HIPS_ERR_KRYLOV HIPS_ERR_MATASSEMB HIPS_ERR_PARAMETER HIPS_ERR_PARASETUP HIPS_ERR_PRECOND HIPS_ERR_RHSASSEMB HIPS_ERR_SOLVE HIPS_FORTRAN_NUMBERING HIPS_FORWARD HIPS_GRAPH_SYM HIPS_GRID_3D HIPS_GRID_DIM HIPS_HYBRID HIPS_ILUT HIPS_IMPROVE_PARTITION HIPS_INFO_DIM HIPS_INFO_FILL HIPS_INFO_FILL_PEAK HIPS_INFO_INNER_ITER HIPS_INFO_INT HIPS_INFO_ITER HIPS_INFO_NNZ HIPS_INFO_NNZ_PEAK HIPS_INFO_OUTER_ITER HIPS_INFO_PRECOND_TIME HIPS_INFO_REAL HIPS_INFO_RES_NORM HIPS_INFO_SOLVE_TIME HIPS_IPARAM HIPS_ITERATIVE HIPS_ITMAX HIPS_ITMAX_SCHUR HIPS_KRYLOV_METHOD HIPS_KRYLOV_RESTART HIPS_LOCALLY HIPS_MASTER HIPS_PARTITION_TYPE HIPS_PIVOTING HIPS_PREC HIPS_REORDER HIPS_RETURNS HIPS_RPARAM HIPS_SCALE HIPS_SCALENBR HIPS_SCHUR_METHOD HIPS_SHIFT_DIAG HIPS_SMOOTH_ITER_RATIO HIPS_STRATNUM HIPS_SUCCESS HIPS_SYMMETRIC HIPS_TAGNBR HIPS_VERBOSE
+
+# > echo "  "`nm --defined-only -g hips/LIB/*.a |sed -re 's/^\S+ \w //;t;d' |sort -u` | sed -re 's/(.{,99}[^ ]) /\1 \\\n  /g'
+from_nm := \
+  add_contrib amalgamate aplb ascend_column_reorder ascend_column_reorder2 block BlockComm_Clean \
+  BlockComm_Init block_elimination_ordering blokMerge buffer_size build_connector_struct calcCoefmax \
+  calc_Emax CBLKDBMatrix_NNZ CellCSDistr_GetCSList CellCSDistr_IntersectList CellCSDistr_ListCopy \
+  CellCSDistr_ListUpdate CellCS_GetCSList CellCS_IntersectList CellCS_ListCopy CellCS_ListUpdate \
+  CellDBDistr_GetCSList CellDBDistr_IntersectList CellDBDistr_ListCopy CellDBDistr_ListUpdate \
+  CellDB_GetCSList CellDB_IntersectList CellDB_ListCopy CellDB_ListUpdate checkBlock checkCSR \
+  checkGraph checkHID check_interior_node checkL checkU choose_leader cleanCONNECTOR cleanCS \
+  compare_node compare_node_tags compute_elimination_tree computeMinVertexSeparator \
+  computeNodeCoverGain computeNodeGain computeNodeTraversalOrder compute_subtree_size compWith2keys \
+  connector_degree connector_graph connector_level_adj context cpymat cs2csr CSC_CSR_InvLT CS_Check \
+  CSC_LDLt_countops_rec CSC_LDLt_OPC CSC_Lsol CSC_Ltsol CSC_matvec_add CSC_matvecz \
+  CSC_NoDiag_matvec_add CS_ColMult CS_ColMult2 CS_ColPerm CS_Copy CSCrowICCprod CSCrowMultCSRcol \
+  CSC_Usol CSCxCSR_CSC_GEMMT CS_DropT CS_DropT_SaveDiag CS_GetLower CS_GetUpper CS_ICCprod CS_ICCT \
+  CS_ILUT CS_ILUTP CS_IntersectRow CS_MatricesAdd CS_MatricesGather CS_Move CSnnz CSnorm1 CSnormFrob \
+  CSnormSquare CS_Perm csr2csc csr2csc2 csr2SolverMatrix CSR_Cnum2Fnum CSRcolnorm1 CSRcolnorm2 \
+  CSRcolnormINF CSR_ColPerm CSR_ComplementSubmatrix CSRcs CSRcs_InaRow CSR_CSR_InvLT CSR_CSR_InvUT \
+  CSR_deldiag CSrealloc CS_Reorder CSR_Fnum2Cnum CSR_GetSquareSubmatrix CSR_GetUpper CSR_Load CSR_Lsol \
+  CSR_MatrixRedistr csr_matvec_add CSR_NoDiag_colnorm1 CSR_NoDiag_colnorm2 CSR_NoDiag_rownorm1 \
+  CSR_NoDiag_rownorm2 CS_RowMult CS_RowMult2 CS_RowPerm CSR_Perm CSRread CSR_Reduce CSRrowMultCSRcol \
+  CSRrownorm1 CSRrownorm2 CSRrownormINF CSR_RowPerm CSR_SuppressDouble CSR_SuppressZeros CSR_Usol \
+  CSR_Write CS_SetNonZeroRow CS_SymmetrizeTriang CS_Transpose CSunrealloc CS_VirtualMerge \
+  CS_VirtualSplit csymv_ DBadd_contrib DBBlockComm_Clean DBBlockComm_Init DBbuffer_size \
+  DBDistrMatrix2PhidalDistrMatrix DBDistrMatrix2PhidalDistrMatrix_Unsym DBDistrMatrix_Clean \
+  DBDistrMatrix_ColMult DBDistrMatrix_Compute_cind DBDistrMatrix_Compute_leader \
+  DBDistrMatrix_Compute_rind DBDistrMatrix_Copy DBDistrMatrix_Copy2 DBDistrMatrix_DiagMult \
+  DBDistrMatrix_Dsolv DBDistrMatrix_FACTOFACTO DBDistrMatrix_FACTOFACTOu DBDistrMatrix_GatherCoef \
+  DBDistrMatrix_ICCT DBDistrMatrix_ICCT_Restrict DBDistrMatrix_Init DBDistrMatrix_Lsolv \
+  DBDISTRMATRIX_MatVec2 DBDISTRMATRIX_MLICCPrec DBDISTRMATRIX_MLILUPrec DBDISTRMATRIX_Precond \
+  DBDISTRMATRIX_PrecSolve DBDistrMatrix_RowMult DBDistrMatrix_Setup DBDistrMatrix_Setup_HID \
+  DBDistrMatrix_Setup_SYMBOL DBDistrMatrix_SetupV DBDISTRMATRIX_Solve DBDistrMatrix_sssGEMM2_sym \
+  DBDistrMatrix_sssGEMM_sym DBDistrMatrix_Transpose DBDistrMatrix_Usolv DBDistrMatrix_Usolv1 \
+  DBDistrMatrix_Usolv2 DBDistrMatrix_VirtualCpy DBDistrPrec_Clean DBDistrPrec_FACTO_TRSM_DROP \
+  DBDistrPrec_FACTO_TRSM_DROPu DBDistrPrec_FACTO_TRSM_GEMM_LL DBDistrPrec_FACTO_TRSM_GEMM_LLu \
+  DBDistrPrec_FACTO_TRSM_GEMM_RL DBDistrPrec_FACTO_TRSM_GEMM_RL_DROPE \
+  DBDistrPrec_FACTO_TRSM_GEMM_RL_DROPEu DBDistrPrec_FACTO_TRSM_GEMM_RLu DBDistrPrec_Init \
+  DBDistrPrecMem_print DBDistrPrecMem_reduce DBDistrPrecMem_reduceMAX DBDistrPrecMem_Set0 \
+  DBDistrPrecMem_Set1 DBDistrPrecMem_SetDropE DBDistrPrecMem_SetDropEAfter DBDistrPrecMem_SetPhidalS \
+  DBDistrPrec_NNZ DBDistrPrec_NNZ_All DBDistrPrec_Print DBDistrPrec_SchurProd DBDistrPrec_SolveForward \
+  DBDistrPrec_Unscale DBDistrPrec_Unscale_Unsym DBgather_contrib DB_ICCprod DB_ICCprod2 DBLsolv \
+  DBLsolv2 DBMatrix2PhidalMatrix DBMatrix2PhidalMatrixDrop DBMatrix2PhidalMatrix_Unsym \
+  DBMatrix2PhidalMatrix_UnsymDrop DBMatrix_AllocSymbmtx DBMatrix_calcCoefmax DBMatrix_Clean \
+  DBMatrix_ColMult DBMatrix_ColMult2 DBMatrixCommVec_PrecSetup DBMatrixCommVec_ReceiveVecAdd \
+  DBMatrixCommVec_Setup DBMatrix_Copy DBMatrix_Copy2 DBMatrix_Copy3 DBMatrix_Copy3_unsym DBMatrix_Cpy \
+  DBMatrix_DiagMult DBMatrix_DiagMult2 DBMATRIX_DistrSolve DBMatrix_Dsolv DBMatrix_Dsolv2 \
+  DBMatrixFactComm_Clean DBMatrixFactComm_Init DBMatrixFactComm_PosteCtrbReceive \
+  DBMatrixFactComm_Setup DBMatrix_FACTO DBMatrix_FACTO2 DBMatrix_FACTOFACTO DBMatrix_FACTOFACTOu \
+  DBMatrix_FACTO_L DBMatrix_FACTO_LEV0 DBMatrix_FACTO_LEV0u DBMatrix_FACTOu DBMatrix_Fill \
+  DBMatrix_GEMM DBMatrix_GEMM_N DBMatrix_GEMMpart DBMatrix_GEMMpartu DBMatrix_GEMMu DBMatrix_GetDiag \
+  DBMatrix_HID2SymbolMatrix DBMatrix_ICCT DBMatrix_ICCT_Restrict DBMatrix_Init DBMatrix_Lsolv \
+  DBMatrix_MatricesAdd DBMatrix_MatricesCopy DBMatrix_MatricesGather DBMATRIX_MatVec DBMATRIX_MatVec2 \
+  DBMATRIX_MLICCPrec DBMATRIX_MLILUPrec DBMatrix_NNZ DBMatrix_NNZGemmPic DBMATRIX_Precond \
+  DBMATRIX_PrecSolve DBMatrix_PRINT DBMatrix_RowMult DBMatrix_RowMult2 DBMatrix_SetDiag DBMatrix_Setup \
+  DBMatrix_Setup2_solvermatrix DBMatrix_Setup_cblktosolvmtx DBMatrix_Setup_HID \
+  DBMatrix_Setup_solvermatrix DBMatrix_Setup_SYMBOL DBMatrix_SetupV DBMatrix_sFACTO DBMatrix_sFACTO_ \
+  DBMatrix_sGEMM DBMatrix_sGEMM2 DBMatrix_sGEMM2_sym DBMatrix_sGEMM_sym DBMatrix_size DBMATRIX_Solve \
+  DBMatrix_ssGEMM2_sym DBMatrix_ssGEMM_sym DBMatrix_Symb2SolvMtx DBMatrix_Symb2SolvMtx_ \
+  DBMatrix_Transpose DBMatrix_TRSM DBMatrix_Usolv DBMatrix_VirtualCpy DBMATVEC2 DBMATVEC21 DBM_NNZ \
+  DBpack_matrix DBposte_block_receive DBPrec_Clean DBPrec_FACTO_TRSM DBPrec_FACTO_TRSM_DROP \
+  DBPrec_FACTO_TRSM_DROPu DBPrec_FACTO_TRSM_GEMM_LL DBPrec_FACTO_TRSM_GEMM_LLu \
+  DBPrec_FACTO_TRSM_GEMM_RL DBPrec_FACTO_TRSM_GEMM_RL_DROPE DBPrec_FACTO_TRSM_GEMM_RL_DROPEu \
+  DBPrec_FACTO_TRSM_GEMM_RLu DBPrec_Init DBPrecMem_Init DBPrecMem_print DBPrecMem_Set0 DBPrecMem_Set1 \
+  DBPrecMem_SetA DBPrecMem_SetC DBPrecMem_SetDropE DBPrecMem_SetDropEAfter DBPrecMem_SetE \
+  DBPrecMem_SetPhidalS DBPrec_NNZ DBPrec_NNZ_After DBPrec_NNZ_Before DBPrec_NNZ_In DBPrec_NNZ_LL \
+  DBPrec_NNZ_RL DBPrec_NNZ_RL_DROPE DBPrec_NNZ_RL_DROPEAfter DBPrecPart_NNZ DBPrec_Print \
+  DBPrec_SchurProd DBPrec_SolveForward DBPrec_Unscale DBPrec_Unscale_Unsym DBreceive_contrib \
+  DBreceive_gather DBreceive_matrix DBsend_matrix DBUsolv DBUsolv2 DcpyDiagToMatrix DcpyMatrixToDiag \
+  dist_ddot DistrCSR_Loc2Glob Draw_2Dmesh Dsolv dumpCS dumpCS2 dumpcsr dumpLLt dumpMTX dwalltime \
+  ewgt_tmp expand_domain export_2Dmesh export_graphviz extract_mat find_dichotom find_local_minimum \
+  find_MIS find_supernodes fix fix_false_interior_node fix_overlap fix_unassigned_node \
+  freeMatrixStruct freeSolverMatrix freeSymbolMatrix Fstring2C gather_contrib GENERAL_setpar \
+  GetCommonRows GetCommonRows_Fast GetCommonRows_Seq GetGlobalConnectorMapping get_interior_domains \
+  get_interior_domainsDOWN_TOP get_interior_domainsTOP_DOWN get_interior_grid get_interior_grid2 \
+  get_overlap GetProcUnknowns get_son get_subtree_node graphOrderGrid22 graphOrderGrid32 GRID_setpar \
+  hazardous HDIM_tmp_apres HDIM_tmp_avant Heap_Add Heap_Clear Heap_Copy Heap_Exit Heap_Get Heap_Init \
+  Heap_Read Heap_Size HID2MatrixStruct HID_BuildCoarseLevel HID_Info HID_PatchLevel HID_quality \
+  hips_assemblybegin hips_assemblybegin_ hips_assemblybegin__ HIPS_AssemblyBegin HIPS_ASSEMBLYBEGIN \
+  hips_assemblyend hips_assemblyend_ hips_assemblyend__ HIPS_AssemblyEnd HIPS_ASSEMBLYEND \
+  hips_assemblysetblockvalues hips_assemblysetblockvalues_ hips_assemblysetblockvalues__ \
+  HIPS_AssemblySetBlockValues HIPS_ASSEMBLYSETBLOCKVALUES hips_assemblysetnodevalues \
+  hips_assemblysetnodevalues_ hips_assemblysetnodevalues__ HIPS_AssemblySetNodeValues \
+  HIPS_ASSEMBLYSETNODEVALUES hips_assemblysetvalue hips_assemblysetvalue_ hips_assemblysetvalue__ \
+  HIPS_AssemblySetValue HIPS_ASSEMBLYSETVALUE hips_checksolution hips_checksolution_ \
+  hips_checksolution__ HIPS_CheckSolution HIPS_CHECKSOLUTION hips_clean hips_clean_ hips_clean__ \
+  HIPS_Clean HIPS_CLEAN HIPS_Context_Init HIPS_Context_Reinit HIPS_CountNNZ_E HIPS_CountNNZ_EOneCol \
+  HIPS_CountNNZ_L HIPS_CountNNZ_LOneCol HIPS_DistrFgmresd_DB HIPS_DistrFgmresd_DB_DB \
+  HIPS_DistrFgmresd_DB_PH HIPS_DistrFgmresd_PH HIPS_DistrFgmresd_PH_DB HIPS_DistrFgmresd_PH_PH \
+  HIPS_DistrPCG_DB_PH HIPS_DistrPCG_PH HIPS_DistrPCG_PH_DB HIPS_DistrPCG_PH_PH hips_exitonerror \
+  hips_exitonerror_ hips_exitonerror__ HIPS_ExitOnError HIPS_EXITONERROR HIPS_Fgmresd_CS_D1 \
+  HIPS_Fgmresd_CS_D2 HIPS_Fgmresd_DB HIPS_Fgmresd_DB_DB HIPS_Fgmresd_DB_PH HIPS_Fgmresd_PH \
+  HIPS_Fgmresd_PH_DB HIPS_Fgmresd_PH_PH hips_finalize hips_finalize_ hips_finalize__ HIPS_Finalize \
+  HIPS_FINALIZE hips_freeprecond hips_freeprecond_ hips_freeprecond__ HIPS_FreePrecond \
+  HIPS_FREEPRECOND hips_getglobalpartition hips_getglobalpartition_ hips_getglobalpartition__ \
+  HIPS_GetGlobalPartition HIPS_GETGLOBALPARTITION hips_getglobalpartitionnbr \
+  hips_getglobalpartitionnbr_ hips_getglobalpartitionnbr__ HIPS_GetGlobalPartitionNbr \
+  HIPS_GETGLOBALPARTITIONNBR hips_getglobalsolution hips_getglobalsolution_ hips_getglobalsolution__ \
+  HIPS_GetGlobalSolution HIPS_GETGLOBALSOLUTION hips_getinfoint hips_getinfoint_ hips_getinfoint__ \
+  HIPS_GetInfoINT HIPS_GETINFOINT hips_getinforeal hips_getinforeal_ hips_getinforeal__ \
+  HIPS_GetInfoREAL HIPS_GETINFOREAL hips_getlocaldomainlist hips_getlocaldomainlist_ \
+  hips_getlocaldomainlist__ HIPS_GetLocalDomainList HIPS_GETLOCALDOMAINLIST hips_getlocaldomainnbr \
+  hips_getlocaldomainnbr_ hips_getlocaldomainnbr__ HIPS_GetLocalDomainNbr HIPS_GETLOCALDOMAINNBR \
+  hips_getlocalnodelist hips_getlocalnodelist_ hips_getlocalnodelist__ HIPS_GetLocalNodeList \
+  HIPS_GETLOCALNODELIST hips_getlocalnodenbr hips_getlocalnodenbr_ hips_getlocalnodenbr__ \
+  HIPS_GetLocalNodeNbr HIPS_GETLOCALNODENBR hips_getlocalpartition hips_getlocalpartition_ \
+  hips_getlocalpartition__ HIPS_GetLocalPartition HIPS_GETLOCALPARTITION hips_getlocalpartitionnbr \
+  hips_getlocalpartitionnbr_ hips_getlocalpartitionnbr__ HIPS_GetLocalPartitionNbr \
+  HIPS_GETLOCALPARTITIONNBR hips_getlocalsolution hips_getlocalsolution_ hips_getlocalsolution__ \
+  HIPS_GetLocalSolution HIPS_GETLOCALSOLUTION hips_getlocalunknownlist hips_getlocalunknownlist_ \
+  hips_getlocalunknownlist__ HIPS_GetLocalUnknownList HIPS_GETLOCALUNKNOWNLIST hips_getlocalunknownnbr \
+  hips_getlocalunknownnbr_ hips_getlocalunknownnbr__ HIPS_GetLocalUnknownNbr HIPS_GETLOCALUNKNOWNNBR \
+  hips_getsolution hips_getsolution_ hips_getsolution__ HIPS_GetSolution HIPS_GETSOLUTION \
+  HIPS_GetSubmatrix hips_graphbegin hips_graphbegin_ hips_graphbegin__ HIPS_GraphBegin HIPS_GRAPHBEGIN \
+  hips_GraphBroadcastHID hips_graphbuildhid hips_graphbuildhid_ hips_graphbuildhid__ \
+  HIPS_GraphBuildHID HIPS_GRAPHBUILDHID hips_graphdistrcsr hips_graphdistrcsr_ hips_graphdistrcsr__ \
+  HIPS_GraphDistrCSR HIPS_GRAPHDISTRCSR hips_graphedge hips_graphedge_ hips_graphedge__ HIPS_GraphEdge \
+  HIPS_GRAPHEDGE hips_graphend hips_graphend_ hips_graphend__ HIPS_GraphEnd HIPS_GRAPHEND \
+  hips_graphglobalcsc hips_graphglobalcsc_ hips_graphglobalcsc__ HIPS_GraphGlobalCSC \
+  HIPS_GRAPHGLOBALCSC hips_graphglobalcsr hips_graphglobalcsr_ hips_graphglobalcsr__ \
+  HIPS_GraphGlobalCSR HIPS_GRAPHGLOBALCSR HIPS_GraphGlobalIJV HIPS_GraphPartition hips_GraphSymmetrize \
+  hips_initialize hips_initialize_ hips_initialize__ HIPS_Initialize HIPS_INITIALIZE \
+  hips_localmatriceload hips_localmatriceload_ hips_localmatriceload__ HIPS_LocalMatriceLoad \
+  HIPS_LOCALMATRICELOAD hips_localmatricessave hips_localmatricessave_ hips_localmatricessave__ \
+  HIPS_LocalMatricesSave HIPS_LOCALMATRICESSAVE hips_matrixdistrcsr hips_matrixdistrcsr_ \
+  hips_matrixdistrcsr__ HIPS_MatrixDistrCSR HIPS_MATRIXDISTRCSR hips_matrixglobalcsc \
+  hips_matrixglobalcsc_ hips_matrixglobalcsc__ HIPS_MatrixGlobalCSC HIPS_MATRIXGLOBALCSC \
+  hips_matrixglobalcsr hips_matrixglobalcsr_ hips_matrixglobalcsr__ HIPS_MatrixGlobalCSR \
+  HIPS_MATRIXGLOBALCSR HIPS_MatrixGlobalIJV hips_matrixlocalcsr hips_matrixlocalcsr_ \
+  hips_matrixlocalcsr__ HIPS_MatrixLocalCSR HIPS_MATRIXLOCALCSR hips_matrixreset hips_matrixreset_ \
+  hips_matrixreset__ HIPS_MatrixReset HIPS_MATRIXRESET hips_matrixvectorproduct \
+  hips_matrixvectorproduct_ hips_matrixvectorproduct__ HIPS_MatrixVectorProduct \
+  HIPS_MATRIXVECTORPRODUCT hips_parallelsetup hips_parallelsetup_ hips_parallelsetup__ \
+  HIPS_ParallelSetup HIPS_PARALLELSETUP HIPS_PCG_CS_D1 HIPS_PCG_CS_D2 HIPS_PCG_DB HIPS_PCG_DB_DB \
+  HIPS_PCG_DB_PH HIPS_PCG_PH HIPS_PCG_PH_DB HIPS_PCG_PH_PH hips_precond hips_precond_ hips_precond__ \
+  HIPS_Precond HIPS_PRECOND hips_printerror hips_printerror_ hips_printerror__ HIPS_PrintError \
+  HIPS_PRINTERROR hips_readoptionsfromfile hips_readoptionsfromfile_ hips_readoptionsfromfile__ \
+  HIPS_ReadOptionsFromFile HIPS_READOPTIONSFROMFILE HIPS_ReadOptionsFromFile_Extra HIPS_RHSReset \
+  hips_setcommunicator hips_setcommunicator_ hips_setcommunicator__ HIPS_SetCommunicator \
+  HIPS_SETCOMMUNICATOR hips_setdefaultoptions hips_setdefaultoptions_ hips_setdefaultoptions__ \
+  HIPS_SetDefaultOptions HIPS_SETDEFAULTOPTIONS hips_setglobalrhs hips_setglobalrhs_ \
+  hips_setglobalrhs__ HIPS_SetGlobalRHS HIPS_SETGLOBALRHS hips_setlocalrhs hips_setlocalrhs_ \
+  hips_setlocalrhs__ HIPS_SetLocalRHS HIPS_SETLOCALRHS hips_setoptionint hips_setoptionint_ \
+  hips_setoptionint__ HIPS_SetOptionINT HIPS_SETOPTIONINT hips_setoptionreal hips_setoptionreal_ \
+  hips_setoptionreal__ HIPS_SetOptionREAL HIPS_SETOPTIONREAL hips_setpartition hips_setpartition_ \
+  hips_setpartition__ HIPS_SetPartition HIPS_SETPARTITION hips_setrhs hips_setrhs_ hips_setrhs__ \
+  HIPS_SetRHS HIPS_SETRHS hips_setsubmatrixcoef hips_setsubmatrixcoef_ hips_setsubmatrixcoef__ \
+  HIPS_SetSubmatrixCoef HIPS_SETSUBMATRIXCOEF hips_setupload hips_setupload_ hips_setupload__ \
+  HIPS_SetupLoad HIPS_SETUPLOAD hips_setupsave hips_setupsave_ hips_setupsave__ HIPS_SetupSave \
+  HIPS_SETUPSAVE hips_solve hips_solve_ hips_solve__ HIPS_Solve HIPS_SOLVE HIPS_SymbolMatrix \
+  hips_transposematrix hips_transposematrix_ hips_transposematrix__ HIPS_TransposeMatrix \
+  HIPS_TRANSPOSEMATRIX HIPS_XPartition ia_tmp idnbr ijv2csr Improve_Partition independent_block \
+  initCONNECTOR initCS intersect_key IntersectRow IntersectSet invL_thresh invU_thresh IOHBTerminate \
+  is_consistentNodeKey is_equal_key is_in_key is_in_key2 is_intersect_key is_mergeable ja_tmp \
+  key_compare LDLk LDLt_piv loadCS Lsolv LU LU_filldrop mark_adjacent_domains matrix_equality \
+  matrix_read matrix_read_ matrix_read__ Matrix_Read MATRIX_READ MatrixStruct2SymbolMatrix matvec \
+  matvec_add matvecz merge_col merge_connector merge_cost merge_last_level mm_is_valid mm_read_banner \
+  mm_read_mtx_array_size mm_read_mtx_crd mm_read_mtx_crd_data mm_read_mtx_crd_entry \
+  mm_read_mtx_crd_size mm_read_unsymmetric_sparse mm_strdup mm_typecode_to_str mm_write_banner \
+  mm_write_mtx_array_size mm_write_mtx_crd mm_write_mtx_crd_size MonFree MonMalloc MonRealloc mpi_max \
+  murge_assemblybegin murge_assemblybegin_ murge_assemblybegin__ MURGE_AssemblyBegin \
+  MURGE_ASSEMBLYBEGIN murge_assemblyend murge_assemblyend_ murge_assemblyend__ MURGE_AssemblyEnd \
+  MURGE_ASSEMBLYEND murge_assemblysetblockvalues murge_assemblysetblockvalues_ \
+  murge_assemblysetblockvalues__ MURGE_AssemblySetBlockValues MURGE_ASSEMBLYSETBLOCKVALUES \
+  murge_assemblysetnodevalues murge_assemblysetnodevalues_ murge_assemblysetnodevalues__ \
+  MURGE_AssemblySetNodeValues MURGE_ASSEMBLYSETNODEVALUES murge_assemblysetvalue \
+  murge_assemblysetvalue_ murge_assemblysetvalue__ MURGE_AssemblySetValue MURGE_ASSEMBLYSETVALUE \
+  murge_clean murge_clean_ murge_clean__ MURGE_Clean MURGE_CLEAN murge_exitonerror murge_exitonerror_ \
+  murge_exitonerror__ MURGE_ExitOnError MURGE_EXITONERROR murge_finalize murge_finalize_ \
+  murge_finalize__ MURGE_Finalize MURGE_FINALIZE murge_getglobalsolution murge_getglobalsolution_ \
+  murge_getglobalsolution__ MURGE_GetGlobalSolution MURGE_GETGLOBALSOLUTION murge_getinfoint \
+  murge_getinfoint_ murge_getinfoint__ MURGE_GetInfoINT MURGE_GETINFOINT murge_getinforeal \
+  murge_getinforeal_ murge_getinforeal__ MURGE_GetInfoREAL MURGE_GETINFOREAL murge_getlocalnodelist \
+  murge_getlocalnodelist_ murge_getlocalnodelist__ MURGE_GetLocalNodeList MURGE_GETLOCALNODELIST \
+  murge_getlocalnodenbr murge_getlocalnodenbr_ murge_getlocalnodenbr__ MURGE_GetLocalNodeNbr \
+  MURGE_GETLOCALNODENBR murge_getlocalsolution murge_getlocalsolution_ murge_getlocalsolution__ \
+  MURGE_GetLocalSolution MURGE_GETLOCALSOLUTION murge_getlocalunknownlist murge_getlocalunknownlist_ \
+  murge_getlocalunknownlist__ MURGE_GetLocalUnknownList MURGE_GETLOCALUNKNOWNLIST \
+  murge_getlocalunknownnbr murge_getlocalunknownnbr_ murge_getlocalunknownnbr__ \
+  MURGE_GetLocalUnknownNbr MURGE_GETLOCALUNKNOWNNBR murge_getsolution murge_getsolution_ \
+  murge_getsolution__ MURGE_GetSolution MURGE_GETSOLUTION murge_getsolver murge_getsolver_ \
+  murge_getsolver__ MURGE_GetSolver MURGE_GETSOLVER murge_graphbegin murge_graphbegin_ \
+  murge_graphbegin__ MURGE_GraphBegin MURGE_GRAPHBEGIN murge_graphedge murge_graphedge_ \
+  murge_graphedge__ MURGE_GraphEdge MURGE_GRAPHEDGE murge_graphend murge_graphend_ murge_graphend__ \
+  MURGE_GraphEnd MURGE_GRAPHEND murge_graphglobalcsc murge_graphglobalcsc_ murge_graphglobalcsc__ \
+  MURGE_GraphGlobalCSC MURGE_GRAPHGLOBALCSC murge_graphglobalcsr murge_graphglobalcsr_ \
+  murge_graphglobalcsr__ MURGE_GraphGlobalCSR MURGE_GRAPHGLOBALCSR murge_graphglobalijv \
+  murge_graphglobalijv_ murge_graphglobalijv__ MURGE_GraphGlobalIJV MURGE_GRAPHGLOBALIJV \
+  murge_initialize murge_initialize_ murge_initialize__ MURGE_Initialize MURGE_INITIALIZE murge_load \
+  murge_load_ murge_load__ MURGE_Load MURGE_LOAD murge_matrixglobalcsc murge_matrixglobalcsc_ \
+  murge_matrixglobalcsc__ MURGE_MatrixGlobalCSC MURGE_MATRIXGLOBALCSC murge_matrixglobalcsr \
+  murge_matrixglobalcsr_ murge_matrixglobalcsr__ MURGE_MatrixGlobalCSR MURGE_MATRIXGLOBALCSR \
+  murge_matrixglobalijv murge_matrixglobalijv_ murge_matrixglobalijv__ MURGE_MatrixGlobalIJV \
+  MURGE_MATRIXGLOBALIJV murge_matrixreset murge_matrixreset_ murge_matrixreset__ MURGE_MatrixReset \
+  MURGE_MATRIXRESET murge_printerror murge_printerror_ murge_printerror__ MURGE_PrintError \
+  MURGE_PRINTERROR murge_rhsreset murge_rhsreset_ murge_rhsreset__ MURGE_RHSReset MURGE_RHSRESET \
+  murge_save murge_save_ murge_save__ MURGE_Save MURGE_SAVE murge_setcommunicator \
+  murge_setcommunicator_ murge_setcommunicator__ MURGE_SetCommunicator MURGE_SETCOMMUNICATOR \
+  murge_setdefaultoptions murge_setdefaultoptions_ murge_setdefaultoptions__ MURGE_SetDefaultOptions \
+  MURGE_SETDEFAULTOPTIONS murge_setglobalrhs murge_setglobalrhs_ murge_setglobalrhs__ \
+  MURGE_SetGlobalRHS MURGE_SETGLOBALRHS murge_setlocalrhs murge_setlocalrhs_ murge_setlocalrhs__ \
+  MURGE_SetLocalRHS MURGE_SETLOCALRHS murge_setoptionint murge_setoptionint_ murge_setoptionint__ \
+  MURGE_SetOptionINT MURGE_SETOPTIONINT murge_setoptionreal murge_setoptionreal_ murge_setoptionreal__ \
+  MURGE_SetOptionREAL MURGE_SETOPTIONREAL murge_setrhs murge_setrhs_ murge_setrhs__ MURGE_SetRHS \
+  MURGE_SETRHS mybfs myload mysave my_zdotc next_stripe nnz2 nnz2N NoDiag_matvec_add norm2 \
+  numericFacto one_node_per_connector orderCheck orderExit orderGrid2 orderGrid2C orderGrid3 \
+  orderGrid3C orderInit pack_matrix ParseIfmt ParseRfmt partition partition64 partition_int \
+  partition_node partition_node_tags partition_row phidal_block_pattern PHIDAL_BuildGraph \
+  PhidalCommVec_Clean PhidalCommVec_Init PhidalCommVec_PrecSetup PhidalCommVec_ReceiveVecAdd \
+  PhidalCommVec_Setup PHIDAL_CsrDelDiag PhidalDistrHID_Clean PhidalDistrHID_Expand \
+  PhidalDistrHID_GenereLocalHID PhidalDistrHID_Init PhidalDistrHID_MapDomains PhidalDistrHID_Setup \
+  PHIDAL_DistrICCT PHIDAL_DistrILUCT PhidalDistrMatrix_Build PhidalDistrMatrix_BuildVirtualMatrix \
+  PhidalDistrMatrix_Check PhidalDistrMatrix_Clean PhidalDistrMatrix_CleanNonLocalBLock \
+  PhidalDistrMatrix_ColMult2 PhidalDistrMatrix_ColNorm2 PhidalDistrMatrix_Compute_cind \
+  PhidalDistrMatrix_Compute_leader PhidalDistrMatrix_Compute_rind PhidalDistrMatrix_Copy \
+  PhidalDistrMatrix_Cut PhidalDistrMatrix_GatherCoef PhidalDistrMatrix_GetUdiag PhidalDistrMatrix_ICCT \
+  PhidalDistrMatrix_ICCT_Restrict PhidalDistrMatrix_ILUCT PhidalDistrMatrix_ILUCT_Restrict \
+  PhidalDistrMatrix_Init PhidalDistrMatrix_Init_fromDBDistr PhidalDistrMatrix_InitScale \
+  PhidalDistrMatrix_InitScale_Unsym PhidalDistrMatrix_Lsolve PhidalDistrMatrix_MatVec \
+  PhidalDistrMatrix_MatVecAdd PhidalDistrMatrix_MatVecSub PhidalDistrMatrix_NB PhidalDistrMatrix_NNZ \
+  PhidalDistrMatrix_NNZ_All PhidalDistrMatrix_NumberContrib PhidalDistrMatrix_RowMult2 \
+  PhidalDistrMatrix_RowNorm2 PhidalDistrMatrix_Scale PhidalDistrMatrix_Scale_Unsym \
+  PhidalDistrMatrix_SetUdiag PhidalDistrMatrix_Setup PhidalDistrMatrix_Transpose \
+  PhidalDistrMatrix_UnsymScale PhidalDistrMatrix_Usolve PHIDAL_DistrMLICCT PHIDAL_DistrMLILUT \
+  PhidalDistrPrec_Clean PhidalDistrPrec_Fake PhidalDistrPrec_GEMM_ICCT PhidalDistrPrec_GEMM_ILUCT \
+  PhidalDistrPrec_Info PhidalDistrPrec_Init PhidalDistrPrec_MLICCT PhidalDistrPrec_MLICCTForward \
+  PhidalDistrPrec_MLILUT PhidalDistrPrec_MLILUTForward PhidalDistrPrec_NNZ PhidalDistrPrec_NNZ_All \
+  PHIDAL_DistrPrecond PhidalDistrPrec_SchurProd PHIDAL_DistrPrecSolve PhidalDistrPrec_SolveForward \
+  PhidalDistrPrec_SymmetricUnscale PhidalDistrPrec_UnsymmetricUnscale PHIDAL_DistrSolve \
+  PhidalDistrVec_Gather PhidalDistrVec_Reduce PhidalFactComm_Clean PhidalFactComm_Init \
+  PhidalFactComm_PosteCtrbReceive PhidalFactComm_PosteCtrbReceiveLU \
+  PhidalFactComm_PosteCtrbReceiveLUMem PhidalFactComm_PosteCtrbReceiveMem PhidalFactComm_Setup \
+  PHIDAL_GEMMT PHIDAL_GEMMT_NN PHIDAL_GEMMT_NT PHIDAL_GetSupernodes PHIDAL_GridRegularDomains \
+  PHIDAL_GridRegularSizeDomains PhidalHID_Check PhidalHID_Clean PhidalHID_Expand PhidalHID_Init \
+  PhidalHID_MapDomains PHIDAL_HIDSize PHIDAL_HierarchDecomp PHIDAL_ICCT PHIDAL_ICCT_InvLT PHIDAL_ILUTP \
+  PHIDAL_Interior2OverlappedPartition PHIDAL_InteriorReorderND PHIDAL_InteriorReorderRCM PHIDAL_InvLT \
+  PHIDAL_InvUT PHIDAL_IpermSize PHIDAL_LoadDistrHID PHIDAL_LoadHID PHIDAL_LoadIperm \
+  PHIDAL_LoadSymbolMatrix PhidalMatrix2SparRow PhidalMatrix_Add PhidalMatrix_Build PHIDAL_MatrixBuild \
+  PhidalMatrix_BuildVirtualMatrix PhidalMatrix_Check PhidalMatrix_Clean PhidalMatrix_ColMult \
+  PhidalMatrix_ColMult2 PhidalMatrix_ColNorm1 PhidalMatrix_ColNorm2 PhidalMatrix_ColNormINF \
+  PhidalMatrix_ColPerm PhidalMatrix_Copy PhidalMatrix_CscCopy PhidalMatrix_CsrCopy PhidalMatrix_Cut \
+  PhidalMatrix_DropT PhidalMatrix_GetUdiag PhidalMatrix_ICCT PhidalMatrix_ICCT_Restrict \
+  PhidalMatrix_ICCTSchur PhidalMatrix_ILUCT PhidalMatrix_ILUCT_Restrict PhidalMatrix_ILUTP \
+  PhidalMatrix_ILUTSchur PhidalMatrix_Init PhidalMatrix_Init_fromDB PhidalMatrix_InitScale \
+  PhidalMatrix_Lsolve PhidalMatrix_NNZ PhidalMatrix_Norm1 PhidalMatrix_NormFrob PhidalMatrix_Print \
+  PhidalMatrix_PrintBLockNNZ PhidalMatrix_Realloc PhidalMatrix_Reinit PhidalMatrix_ReorderInterior \
+  PhidalMatrix_RowDensity PhidalMatrix_RowMult PhidalMatrix_RowMult2 PhidalMatrix_RowNorm1 \
+  PhidalMatrix_RowNorm2 PhidalMatrix_RowNormINF PhidalMatrix_RowPerm PhidalMatrix_Scale \
+  PhidalMatrix_Scale_Unsym PhidalMatrix_SetUdiag PhidalMatrix_Setup PhidalMatrix_Setup2 \
+  PhidalMatrix_SymScale PhidalMatrix_Transpose PhidalMatrix_Transpose_SparMat PhidalMatrix_UnsymScale \
+  PhidalMatrix_Usolve PHIDAL_MatVec PHIDAL_MatVecAdd PHIDAL_MatVecSub PHIDAL_MinimizeFill \
+  PHIDAL_MLICCTPrec PHIDAL_MLILUTPrec PhidalOptions_Clean PhidalOptions_Fix PhidalOptions_Init \
+  PhidalOptions_Print PHIDAL_Partition2OverlappedPartition PHIDAL_Perm2OverlappedDomains \
+  PHIDAL_Perm2SizedDomains PHIDAL_Perm2SizedDomains_LOAD PHIDAL_Perm2SizedDomains_SAVE \
+  PhidalPrec_Clean PhidalPrec_GEMM_ICCT PhidalPrec_GEMM_ILUCT PhidalPrec_Info PhidalPrec_Init \
+  PhidalPrec_MLICCT PhidalPrec_MLICCTForward PhidalPrec_MLILUT PhidalPrec_MLILUTForward PhidalPrec_NNZ \
+  PHIDAL_Precond PhidalPrec_PrintInfo PhidalPrec_SchurProd PHIDAL_PrecSolve PhidalPrec_SolveForward \
+  PhidalPrec_SymmetricUnscale PhidalPrec_UnsymmetricUnscale PHIDAL_ScotchOrder2OverlappedDomains \
+  PHIDAL_SerializeHID PHIDAL_SerializeIperm PHIDAL_SerializeSymbolMatrix PHIDAL_SetMatrixCoef \
+  PHIDAL_Solve PHIDAL_SymbolMatrixSize PHIDAL_SymmetrizeMatrix PHIDAL_UnSerializeHID \
+  PHIDAL_UnSerializeIperm PHIDAL_UnSerializeSymbolMatrix PHIDAL_WriteDistrHID PHIDAL_WriteHID \
+  PHIDAL_WriteIperm PHIDAL_WriteSymbolMatrix poste_block_receive Poste_DiagRcv post_order \
+  PrecInfo_AddNNZ PrecInfo_Clean PrecInfo_Init PrecInfo_Max PrecInfo_MaxThese PrecInfo_Print \
+  PrecInfo_PrintMax PrecInfo_PrintMaxThese PrecInfo_SetNNZA PrecInfo_SubNNZ printAlloc print_mat \
+  print_size queueAdd queueAdd2 queueClear queueCopy queueExit queueGet queueGet2 queueGet3 queueInit \
+  queueRead queueReadKey queueSize quicksort quicksort64 quicksort_int quicksort_node \
+  quicksort_node_tags quicksort_row QuotientDomainGraph RCM readHB_aux_char readHB_aux_double \
+  readHB_header readHB_info readHB_mat_char readHB_mat_double readHB_newaux_char readHB_newaux_double \
+  readHB_newmat_char readHB_newmat_double read_iajama read_ijv read_ijv3 read_options read_options_ \
+  read_options__ Read_options READ_OPTIONS readVecCoef readVecInt readVecInt2 receive_contrib \
+  receive_gather receive_matrix recursive_sum2 regroupe reinitCS reinitVSolverMatrix RowColcompact \
+  SCOTCH_graphBuild_WRAPPER SCOTCH_graphOrder_WRAPPER SCOTCH_graphPart_WRAPPER send_diagonal \
+  send_matrix set_add set_coeff set_delete set_diagonaly_dominance setupblocks setup_class setuplevels \
+  SF_Direct SF_GSurow SF_level SolverMatrix2SolverMatrix SolverMatrix_Clean SolverMatrix_GEMM_R \
+  SolverMatrix_size SolverMatrix_TRSM sort_interior_nodes sort_row SparRow2SolverMatrix substr \
+  symbolicBlok symbolicBlok2 symbolicFacto SymbolMatrix_Clean SymbolMatrix_Cut SymbolMatrix_Cut2 \
+  SymbolMatrix_Expand SymbolMatrix_Expand2 SymbolMatrix_Extract SymbolMatrix_FillCheck \
+  SymbolMatrix_GetLocal SymbolMatrix_hdim SymbolMatrix_Init SymbolMatrixN_NNZ SymbolMatrix_NNZ \
+  SymbolMatrix_size SymbolMatrix_VirtualCopy tab_max testme TR TR1 UDBDistrMatrix_Build \
+  UDBMatrix_Build union_set UnionSet unpack_matrix upcase upgradeNodeKey Usolv vec_balanced_partition \
+  vec_filldrop VecInvPermute vec_max vec_read vec_read_ vec_read__ VECread VEC_READ VS2_ICCT VS2_ICCTu \
+  VS2_InvLT VS2_LMATVEC VS2_Lsol VS2_UMATVEC VS2_Usol VS_ICCT VS_ICCTu VS_InvLT VS_LMATVEC VS_Lsol \
+  VSolverMatrix2SparRow VSolverMatrix2SparRowDrop VSolverMatrix_Clean VSolverMatrix_CleanTmp \
+  VSolverMatrix_CleanTmpNODIAG VSolverMatrix_GetDiag VSolverMatrix_nnz VS_RowDiv VS_UMATVEC VS_Usol \
+  vwgt_tmp writeCS writeHB_mat_char writeHB_mat_double writeVecCoef writeVecInt writeVecInt2 \
+  zsymv_
+
+to_prefix := $(from_cc) $(from_nm)
+
+print:
+	printf "%s\n" $(to_prefix)
+
+###############################################################################
+# compilations
+
+dhips/LIB/libhips.a: dhips/makefile.inc FORCE
+	$(MAKE) -C dhips lib
+
+zhips/LIB/libhips.a: zhips/makefile.inc FORCE
+	$(MAKE) -C zhips lib
+
+dhips_defines := $(shell for w in $(to_prefix);do echo "'\#define" $${w} d$${w}"'";done)
+zhips_defines := $(shell for w in $(to_prefix);do echo "'\#define" $${w} z$${w}"'";done)
+undefs := $(patsubst %,'\#undef %',HIPS_H $(to_prefix) COEF)
+include_sed := s|^( *\#define +COEF .*)|/*\1*/|;\
+s|(typedef INTS dim_t;)|\#if !TYPEDEFED_INTS\n\#define TYPEDEFED_INTS 1\n\1|;\
+s|(typedef INTS blas_t;)|\1\n\#endif|
+
+dhips/LIB/dhips.h: dhips/makefile.inc Makefile
+	printf "%s\n" \
+	  '#define COEFD double' \
+	  '#define COEF COEFD' \
+	  $(dhips_defines) \
+	  '#include "zdhips.h"' \
+	  $(undefs) \
+	  >$@
+	sed -re "$(include_sed)" dhips/SRC/INCLUDE/hips.h >dhips/LIB/zdhips.h
+
+zhips/LIB/zhips.h: zhips/makefile.inc Makefile
+	printf "%s\n" \
+	  '#define COEFZ complex_t' \
+	  '#define COEF COEFZ' \
+	  $(zhips_defines) \
+	  '#include "zdhips.h"' \
+	  $(undefs) \
+	  >$@
+	sed -re "$(include_sed)" zhips/SRC/INCLUDE/hips.h >zhips/LIB/zdhips.h
+
+###############################################################################
+# copies and makefiles
+
+rsync_cmd = rsync -ac --exclude=makefile.inc --exclude=*.[oa] $</ $@/
+
+dhips: hips FORCE
+	$(rsync_cmd)
+
+dhips_flags := $(shell for w in $(to_prefix);do echo -D$${w}=d$${w};done)
+zhips_flags := $(shell for w in $(to_prefix);do echo -D$${w}=z$${w};done)
+
+dhips/makefile.inc: dhips hips/makefile.inc Makefile
+	cd $</;\
+	sed -r \
+	    -e 's|^(\s*CFLAGS\s*=)[^#]*(.*)|\2\n\1 $(dhips_flags)|' \
+	    ../hips/makefile.inc >makefile.inc && \
+	  $(MAKE) clean
+
+zhips: dhips dhips/makefile.inc FORCE
+	$(rsync_cmd)
+
+zhips/makefile.inc: zhips dhips/makefile.inc Makefile
+	cd $</;\
+	sed -r \
+	    -e 's|^(\s*COEFTYPE\s*=).*|\1 -DTYPE_COMPLEX|' \
+	    -e 's|^(\s*CFLAGS\s*=)(.*)|\1 $(zhips_flags)|' \
+	    ../dhips/makefile.inc >makefile.inc && \
+	  $(MAKE) clean
+
+hips/makefile.inc: hips Makefile
+	cd $</;\
+	sed -r \
+	    -e 's|^(\s*PARTITIONER\s*=).*|\1 -DSCOTCH_PART|' \
+	    -e 's|^(\s*[CF]OPTFLAGS\s*=\s)[^#]*(.*)|\1$(OPTFLAGS)  \2|' \
+	    -e 's|^(\s*ISCOTCH\s*=\s*).*|\1-I$(SCOTCHINCDIR)|' \
+	    -e 's|^(\s*LSCOTCH\s*=\s*).*|\1-L$(SCOTCHLIBDIR) -lscotch -lscotcherr|' \
+	    Makefile_Inc_Examples/makefile.inc.gnu.nofortran >makefile.inc && \
+	  $(MAKE) clean
+
+###############################################################################
+# tarball and extraction
+
+tarballName:= hips-1.2b-rc5.tar.gz
+tarballDir:= ..
+tarball:= $(tarballDir)/$(tarballName)
+
+hips: $(tarball)
+	tar xf $<
+
+$(tarball):
+	mv $(tarballName) .. || wget -P $(tarballDir) http://hips.gforge.inria.fr/release/$(tarballName)
+
+clean:
+	$(RM) -r zhips dhips
+#	$(MAKE) -C hips clean

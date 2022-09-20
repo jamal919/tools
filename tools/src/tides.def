@@ -1,0 +1,199 @@
+
+/*******************************************************************************
+
+  T-UGO tools, 2006-2019
+
+  Unstructured Ocean Grid initiative
+
+*******************************************************************************/
+/** \file
+
+\brief tidal constituants definition
+*/
+/*----------------------------------------------------------------------------*/
+
+#ifndef __TIDE_DEF
+#define __TIDE_DEF
+
+#ifdef __TIDE_DEF_MAIN
+#define GLOBAL
+#else
+#define GLOBAL extern
+#endif
+
+GLOBAL tidal_wave wST1 __attribute__((unused));
+GLOBAL tidal_wave wST2 __attribute__((unused));
+GLOBAL tidal_wave wST3 __attribute__((unused));
+GLOBAL tidal_wave wSNK2 __attribute__((unused));
+GLOBAL spectrum_t darwin __attribute__((unused));
+
+/** \file
+the list of harmonic constituents, from #WAVELISTREF
+taking into account :
+  + for 3rd order terms, a factor of 1./2*a*2./3*U=0.2667
+  + for 4th order terms, a factor of 1./3*a*2./3*U=0.1778
+  between
+  + the coefficient C of the tide-raising force
+    as explained by Schureman (1940, §74-76 pp.24-25)
+  + and the astronomic potential
+Waves with a Doodson number are from the PhD thesis of Christian Le Provost (1974).
+*/
+
+//Darwin constituants
+                        //bug 28-05-2010
+                        /*-----------------------potentiel---T---s---h---p--p1-ksi--nu-nu1-nu2-Qa-Ra-shift-form-code-frq-alias-name*/
+                        /*-----------------------potentiel--X---T---s---h---p--p1-ksi--nu-nu1-nu2-Qu-R-shift-form-code-frq-alias-name*/
+const tidal_wave wmean __attribute__((unused)) ={ 0.000000, 2,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0,   0, 187,  0, 0.0, 0.0, "mean"};
+const tidal_wave wNUL  __attribute__((unused)) ={ 0.000000, 2,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0,  0, 0.0, 0.0, "NUL"};
+
+const tidal_wave wZ0   __attribute__((unused)) ={ 0.000000, 2,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0,  0, 0.0, 0.0, "Z0"};
+/* NOTE : there are other permanent terms: radiative (Z0, above) and solar (without nodal correction, so not coded) */
+const tidal_wave wM0   __attribute__((unused)) ={ 0.134523, 2,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0,   0,  73,  0, 0.0, 0.0, "M0"}; /* ref. A1 */
+
+const tidal_wave wSa_1 __attribute__((unused)) ={ 0.003147, 2,  0,  0,  1,  0, -1,  0,  0,  0,  0, 0, 0,   0,   0, 47, 0.0, 0.0, "Sa_1"}; /* ref. B2 */
+const tidal_wave wSa   __attribute__((unused)) ={ 0.000000, 2,  0,  0,  1,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0, 47, 0.0, 0.0, "Sa"};
+const tidal_wave wSsa_1 __attribute__((unused)) ={0.000195, 2,  0,  0,  2, -2,  0,  0,  0,  0,  0, 0, 0,   0,   0, 46, 0.0, 0.0, "Ssa_1"}; /* 057355 */
+const tidal_wave wSsa  __attribute__((unused)) ={ 0.019416, 2,  0,  0,  2,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0, 46, 0.0, 0.0, "Ssa"};
+const tidal_wave wSta  __attribute__((unused)) ={ 0.001146, 2,  0,  0,  3,  0, -1,  0,  0,  0,  0, 0, 0,   0,   0, -1, 0.0, 0.0, "Sta"}; /* ref. B7 */
+const tidal_wave wMm   __attribute__((unused)) ={ 0.022056, 2,  0, +1,  0, -1,  0,  0,  0,  0,  0, 0, 0,   0,  73, 38, 0.0, 0.0, "Mm"}; /* ref. A2 */
+const tidal_wave wMm_2 __attribute__((unused)) ={ 0.007094, 3,  0, +1,  0,  0,  0, -1,  0,  0,  0, 0, 0, -90, 141, 38, 0.0, 0.0, "Mm_2"}; /* ref. A64 */
+const tidal_wave wMm_1 __attribute__((unused)) ={ 0.001147, 2,  0, +1,  0, +1,  0, -2,  0,  0,  0, 0, 0,+180,  74, 38, 0.0, 0.0, "Mm_1"}; /* ref. A8 */
+const tidal_wave wMSm  __attribute__((unused)) ={ 0.003094, 2,  0, +1, -2, +1,  0,  0,  0,  0,  0, 0, 0,   0,  73, 41, 0.0, 0.0, "MSm"}; /* ref. A4 */
+const tidal_wave wMSf  __attribute__((unused)) ={ 0.002240, 2,  0, +2, -2,  0,  0,  0,  0,  0,  0, 0, 0,   0,  73, 39, 0.0, 0.0, "MSf"};
+const tidal_wave wMf   __attribute__((unused)) ={ 0.041765, 2,  0, +2,  0,  0,  0, -2,  0,  0,  0, 0, 0,   0,  74, 40, 0.0, 0.0, "Mf"}; /* ref. A6 */
+const tidal_wave wMf_2 __attribute__((unused)) ={ 0.001156, 3,  0, +2,  0, -1,  0, -1,  0,  0,  0, 0, 0, -90, 141, 40, 0.0, 0.0, "Mf_2"}; /* ref. A65 */
+const tidal_wave wMf_1 __attribute__((unused)) ={ 0.001814, 2,  0, +2,  0, -2,  0,  0,  0,  0,  0, 0, 0,   0,  73, 40, 0.0, 0.0, "Mf_1"}; /* ref. A3 */
+const tidal_wave wMtm  __attribute__((unused)) ={ 0.008081, 2,  0, +3,  0, -1,  0, -2,  0,  0,  0, 0, 0,   0,  74, 42, 0.0, 0.0, "Mtm"}; /* ref. A7 */
+const tidal_wave wMqm  __attribute__((unused)) ={ 0.001067, 2,  0, +4,  0, -2,  0, -2,  0,  0,  0, 0, 0,   0,  74, 43, 0.0, 0.0, "Mqm"}; /* ref. A9 */
+const tidal_wave wMStm_1 __attribute__((unused))={0.000579, 2,  0, +3, -2, -1,  0,  0,  0,  0,  0, 0, 0,   0,   0, 44, 0.0, 0.0, "MStm_1"}; /* 083455 */
+const tidal_wave wMStm __attribute__((unused)) ={ 0.001147, 2,  0, +3, -2,  1,  0, -2,  0,  0,  0, 0, 0,   0,  74, 44, 0.0, 0.0, "MStm"}; /* ref. A10 */
+const tidal_wave wMSqm __attribute__((unused)) ={ 0.000667, 2,  0, +4, -2,  0,  0, -2,  0,  0,  0, 0, 0,   0,  74, 45, 0.0, 0.0, "MSqm"}; /* ref. A12 */
+ 
+const tidal_wave wO1   __attribute__((unused)) ={ 0.100573, 2, +1, -2, +1,  0,  0, +2, -1,  0,  0, 0, 0, +90,  75,  1, 0.0, 0.0, "O1"};
+const tidal_wave wQ1   __attribute__((unused)) ={ 0.019469, 2, +1, -3, +1, +1,  0, +2, -1,  0,  0, 0, 0, +90,  75, 27, 0.0, 0.0, "Q1"};
+const tidal_wave w2Q1  __attribute__((unused)) ={ 0.002587, 2, +1, -4, +1, +2,  0, +2, -1,  0,  0, 0, 0, +90,  75, 67, 0.0, 0.0, "2Q1"};
+const tidal_wave wRo1  __attribute__((unused)) ={ 0.003787, 2, +1, -3, +3, -1,  0, +2, -1,  0,  0, 0, 0, +90,  75, 68, 0.0, 0.0, "Ro1"};
+const tidal_wave wSig1 __attribute__((unused)) ={ 0.001627, 2, +1, -4, +3,  0,  0, +2, -1,  0,  0, 0, 0, +90,  75, 69, 0.0, 0.0, "Sig1"};
+const tidal_wave wJ1   __attribute__((unused)) ={ 0.007921, 2, +1, +1, +1, -1,  0,  0, -1,  0,  0, 0, 0, -90,  76, 29, 0.0, 0.0, "J1"};
+const tidal_wave wKi1  __attribute__((unused)) ={ 0.001120, 2, +1, -1, +3, -1,  0,  0, -1,  0,  0, 0, 0, -90,  76, 70, 0.0, 0.0, "Ki1"};
+const tidal_wave wTta1 __attribute__((unused)) ={ 0.001120, 2, +1, +1, -1, +1,  0,  0, -1,  0,  0, 0, 0, -90,  76, 73, 0.0, 0.0, "Tta1"};
+const tidal_wave wS1   __attribute__((unused)) ={ 0.000000, 2, +1,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0, 26, 0.0, 0.0, "S1"};
+const tidal_wave wPi1  __attribute__((unused)) ={ 0.002747, 2, +1,  0, -2,  0, +1,  0,  0,  0,  0, 0, 0, +90,   0, 71, 0.0, 0.0, "Pi1"};
+const tidal_wave wK1   __attribute__((unused)) ={ 0.141484, 2, +1,  0, +1,  0,  0,  0,  0, -1,  0, 0, 0, -90, 227,  3, 0.0, 0.0, "K1"};
+const tidal_wave wP1   __attribute__((unused)) ={ 0.046806, 2, +1,  0, -1,  0,  0,  0,  0,  0,  0, 0, 0, +90,   0,  2, 0.0, 0.0, "P1"};
+const tidal_wave wPsi1 __attribute__((unused)) ={ 0.001120, 2, +1,  0, +2,  0, -1,  0,  0,  0,  0, 0, 0, -90,   0,  0, 0.0, 0.0, "Psi1"};
+const tidal_wave wPhi1 __attribute__((unused)) ={ 0.002027, 2, +1,  0, +3,  0,  0,  0,  0,  0,  0, 0, 0, -90,   0, 72, 0.0, 0.0, "Phi1"};
+const tidal_wave wOO1  __attribute__((unused)) ={ 0.004347, 2, +1, +2, +1,  0,  0, -2, -1,  0,  0, 0, 0, -90,  77, 28, 0.0, 0.0, "OO1"};
+const tidal_wave wMP1  __attribute__((unused)) ={ 0.000800, 2, +1, -2, +3,  0,  0,  0, -1,  0,  0, 0, 0, -90,  76, 49, 0.0, 0.0, "MP1"};
+const tidal_wave wSO1  __attribute__((unused)) ={ 0.000000, 2, +1, +2, -1,  0,  0,  0, -1,  0,  0, 0, 0, -90,  76, 48, 0.0, 0.0, "SO1"};
+const tidal_wave wKQ1  __attribute__((unused)) ={ 0.000085, 2, +1, +3, +1, -1,  0, -2, -1,  0,  0, 0, 0, -90,  15, 76, 0.0, 0.0, "KQ1"};
+//const tidal_wave wM1   __attribute__((unused)) ={ 0.009788, 2, +1, -1, +1, +1,  0, +1, -1,  0,  0, 0, 0, -90, 144, 74, 0.0, 0.0, "M1"};
+//const tidal_wave wM1   __attribute__((unused)) ={ 0.009788, 2, +1, -1, +1,  0,  0, +1, -1,  0,  0, 0, 0, -90, 144, 74, 0.0, 0.0, "M1"};
+const tidal_wave wM1   __attribute__((unused)) ={ 0.008454, 2, +1, -1, +1, +1,  0,  0, -1,  0,  0,-1, 0, -90, 206, 74, 0.0, 0.0, "M1"}; /* from #WAVELISTREF, note 1, line 1 */
+#define USE_M1_12 0
+/*
+  1. M1 from Schureman (1940) Table 2 note 1 (p165) does not take into account wM1_3 but only wM1_1 and wM1_2
+      because M1_3 is of order 3
+  2. The resulting M1 fits the summation of wM1_1 and wM1_2
+  3. Therefore we use the resulting M1 and forget about wM1_3 for the moment.
+  4. AVISO tidal predictions use separate wM1_1 and wM1_2 (on 2018-10-05).
+  */
+const tidal_wave wM1_1 __attribute__((unused)) ={ 0.002774, 2, +1, -1, +1, -1,  0, +2, -1,  0,  0, 0, 0, -90,  75, 74, 0.0, 0.0, "M1_1"}; /* ref. A16 */
+const tidal_wave wM1_2 __attribute__((unused)) ={ 0.007921, 2, +1, -1, +1, +1,  0,  0, -1,  0,  0, 0, 0, -90,  76, 74, 0.0, 0.0, "M1_2"}; /* ref. A23 */
+const tidal_wave wM1_3 __attribute__((unused)) ={ 0.006528, 3, +1, -1, +1,  0,  0, +1, -1,  0,  0, 0, 0,   0, 144, 74, 0.0, 0.0, "M1_3"}; /* ref. A71 */
+
+const tidal_wave wE2   __attribute__((unused)) ={ 0.001789, 2, +2, -5, +4, +1,  0, +2, -2,  0,  0, 0, 0,   0,  78,  4, 0.0, 0.0, "E2"}; /*epsilon2*/
+const tidal_wave w2N2  __attribute__((unused)) ={ 0.006267, 2, +2, -4, +2, +2,  0, +2, -2,  0,  0, 0, 0,   0,  78,  5, 0.0, 0.0, "2N2"};
+const tidal_wave wMu2  __attribute__((unused)) ={ 0.005841, 2, +2, -4, +4,  0,  0, +2, -2,  0,  0, 0, 0,   0,  78,  6, 0.0, 0.0, "Mu2"};
+const tidal_wave wN2   __attribute__((unused)) ={ 0.046313, 2, +2, -3, +2, +1,  0, +2, -2,  0,  0, 0, 0,   0,  78,  7, 0.0, 0.0, "N2"};
+const tidal_wave wNu2  __attribute__((unused)) ={ 0.009094, 2, +2, -3, +4, -1,  0, +2, -2,  0,  0, 0, 0,   0,  78,  8, 0.0, 0.0, "Nu2"};
+const tidal_wave wM2   __attribute__((unused)) ={ 0.242297, 2, +2, -2, +2,  0,  0, +2, -2,  0,  0, 0, 0,   0,  78,  9, 0.0, 0.0, "M2"};
+const tidal_wave wL2   __attribute__((unused)) ={ 0.006694, 2, +2, -1, +2, -1,  0, +2, -2,  0,  0, 0,-1,+180, 215, 11, 0.0, 0.0, "L2"};
+const tidal_wave wLa2  __attribute__((unused)) ={ 0.001760, 2, +2, -1,  0, +1,  0, +2, -2,  0,  0, 0, 0,+180,  78, 10, 0.0, 0.0, "La2"};
+const tidal_wave wT2   __attribute__((unused)) ={ 0.006614, 2, +2,  0, -1,  0, +1,  0,  0,  0,  0, 0, 0,   0,   0, 12, 0.0, 0.0, "T2"};
+const tidal_wave wS2   __attribute__((unused)) ={ 0.112734, 2, +2,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0, 13, 0.0, 0.0, "S2"};
+const tidal_wave wK2   __attribute__((unused)) ={ 0.030697, 2, +2,  0, +2,  0,  0,  0,  0,  0, -2, 0, 0,   0, 235, 14, 0.0, 0.0, "K2"};
+const tidal_wave wKJ2  __attribute__((unused)) ={ 0.001707, 2, +2, +1, +2, -1,  0,  0,  0,  0, -2, 0, 0,   0,  79, 77, 0.0, 0.0, "KJ2"}; /*eta2*/
+const tidal_wave wR2   __attribute__((unused)) ={ 0.000933, 2, +2,  0, +1,  0, -1,  0,  0,  0,  0, 0, 0,+180,   0, 50, 0.0, 0.0, "R2"};
+ 
+const tidal_wave wOQ2  __attribute__((unused)) ={ 0.000000, 2, +2, -5, +2, +1,  0,  0,  0,  0,  0, 0, 0,+180,   7, 51, 0.0, 0.0, "OQ2"};
+const tidal_wave w2MK2 __attribute__((unused)) ={ 0.000000, 2, +2, -4, +2,  0,  0,  4, -4,  0, +2, 0, 0,   0,   5, 65, 0.0, 0.0, "2MK2"};
+const tidal_wave wMSK2 __attribute__((unused)) ={ 0.000000, 2, +2, -2,  0,  0,  0, +2, -2,  0, +2, 0, 0,   0,   8, 31, 0.0, 0.0, "MSK2"};
+const tidal_wave wMSN2 __attribute__((unused)) ={ 0.000000, 2, +2, +1,  0, -1,  0,  0,  0,  0,  0, 0, 0,   0,   6, 15, 0.0, 0.0, "MSN2"};
+const tidal_wave w2SM2 __attribute__((unused)) ={ 0.000000, 2, +2, +2, -2,  0,  0, -2, +2,  0,  0, 0, 0,   0,  16, 16, 0.0, 0.0, "2SM2"};
+const tidal_wave wM_SK_2 __attribute__((unused)) ={0.00000, 2, +2, -2, +1,  0,  0, +2, -2,  1,  0, 0, 0, +90,   9, 37, 0.0, 0.0, "M(SK)2"};
+const tidal_wave wM_KS_2 __attribute__((unused)) ={0.00000, 2, +2, -2, +3,  0,  0, +2, -2, -1,  0, 0, 0, -90,   9, 36, 0.0, 0.0, "M(KS)2"};
+const tidal_wave wMKS2 __attribute__((unused)) ={ 0.000000, 2, +2, -2, +4,  0,  0, +2, -2,  0, -2, 0, 0,   0,   8, 30, 0.0, 0.0, "MKS2"};
+const tidal_wave wOP2  __attribute__((unused)) ={ 0.000000, 2, +2, -2,  0,  0,  0, +2, -1,  0,  0, 0, 0,+180,  11,100, 0.0, 0.0, "OP2"};
+const tidal_wave wMNS2 __attribute__((unused)) ={ 0.000000, 2, +2, -5, +4, +1,  0, +4, -4,  0,  0, 0, 0,   0,   6,101, 0.0, 0.0, "MNS2"};
+
+const tidal_wave w2SN2 __attribute__((unused)) ={ 0.000000, 2, +2, +3, -2, -1,  0, -2, +2,  0,  0, 0, 0,   0,  78,102, 0.0, 0.0, "2SN2"};
+const tidal_wave w2NS2 __attribute__((unused)) ={ 0.000000, 2, +2, -6, +4, +2,  0, +4, -4,  0,  0, 0, 0,   0,   1,103, 0.0, 0.0, "2NS2"};
+ 
+const tidal_wave wM3   __attribute__((unused)) ={ 0.000000, 3, +3, -3, +3,  0,  0, +3, -3,  0,  0, 0, 0,   0,   1, 34, 0.0, 0.0, "M3"};
+const tidal_wave wS3   __attribute__((unused)) ={ 0.000000, 2, +3,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0,   0,   1, 35, 0.0, 0.0, "S3"};
+const tidal_wave w2MK3 __attribute__((unused)) ={ 0.000000, 2, +3, -4, +3,  0,  0, +4, -4, +1,  0, 0, 0, +90,  10, 25, 0.0, 0.0, "2MK3"};
+const tidal_wave wSO3  __attribute__((unused)) ={ 0.000000, 2, +3, -2, +1,  0,  0, +2, -1,  0,  0, 0, 0, +90,  11, 53, 0.0, 0.0, "SO3"};
+const tidal_wave wMK3  __attribute__((unused)) ={ 0.000000, 2, +3, -2, +3,  0,  0, +2, -2, -1,  0, 0, 0, -90,  10, 24, 0.0, 0.0, "MK3"};
+const tidal_wave wSK3  __attribute__((unused)) ={ 0.000000, 2, +3,  0, +1,  0,  0,  0,  0, -1,  0, 0, 0, -90,  17, 54, 0.0, 0.0, "SK3"};
+const tidal_wave wMO3  __attribute__((unused)) ={ 0.000000, 2, +3, -4, +3,  0,  0, +4, -3,  0,  0, 0, 0, +90,  13,102, 0.0, 0.0, "MO3"};
+
+const tidal_wave wN4   __attribute__((unused)) ={ 0.000000, 2, +4, -6, +4, +2,  0, +4, -4,  0,  0, 0, 0,   0,   1, 33, 0.0, 0.0, "N4"  };
+const tidal_wave wM4   __attribute__((unused)) ={ 0.000000, 2, +4, -4, +4,  0,  0, +4, -4,  0,  0, 0, 0,   0,   1, 18, 0.0, 0.0, "M4"  };
+const tidal_wave wS4   __attribute__((unused)) ={ 0.000000, 2, +4,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0, 56, 0.0, 0.0, "S4"  };
+const tidal_wave wR4   __attribute__((unused)) ={ 0.000000, 2, +4,  0,  2,  0, -2,  0,  0,  0,  0, 0, 0,   0,   0, 56, 0.0, 0.0, "R4"  };
+const tidal_wave wMN4  __attribute__((unused)) ={ 0.000000, 2, +4, -5, +4,  1,  0, +4, -4,  0,  0, 0, 0,   0,   1, 17, 0.0, 0.0, "MN4" };
+const tidal_wave wMS4  __attribute__((unused)) ={ 0.000000, 2, +4, -2, +2,  0,  0, +2, -2,  0,  0, 0, 0,   0,   2, 19, 0.0, 0.0, "MS4" };
+const tidal_wave wMK4  __attribute__((unused)) ={ 0.000000, 2, +4, -2, +4,  0,  0, +2, -2,  0, -2, 0, 0,   0,   4, 20, 0.0, 0.0, "MK4" };
+const tidal_wave wSN4  __attribute__((unused)) ={ 0.000000, 2, +4, -3, +2, +1,  0, +2, -2,  0,  0, 0, 0,   0,   2, 55, 0.0, 0.0, "SN4" };
+const tidal_wave w3MS4 __attribute__((unused)) ={ 0.000000, 2, +4, -6, +6,  0,  0, +6, -6,  0,  0, 0, 0,   0,  12, 58, 0.0, 0.0, "3MS4"};
+const tidal_wave wSK4  __attribute__((unused)) ={ 0.000000, 2, +4,  0, +2,  0,  0,  0,  0,  0, -2, 0, 0,   0,  14,103, 0.0, 0.0, "SK4" };
+
+const tidal_wave wM6   __attribute__((unused)) ={ 0.000000, 2, +6, -6, +6,  0,  0, +6, -6,  0,  0, 0, 0,   0,   4, 22, 0.0, 0.0, "M6"  };
+const tidal_wave w2MN6 __attribute__((unused)) ={ 0.000000, 2, +6, -7, +6,  1,  0, +6, -6,  0,  0, 0, 0,   0,  18, 21, 0.0, 0.0, "2MN6"};
+const tidal_wave w2MS6 __attribute__((unused)) ={ 0.000000, 2, +6, -4, +4,  0,  0, +4, -4,  0,  0, 0, 0,   0,   6, 59, 0.0, 0.0, "2MS6"};
+const tidal_wave w2MK6 __attribute__((unused)) ={ 0.000000, 2, +6, -4, +6,  0,  0, +4, -4,  0, -2, 0, 0,   0,   5, 60, 0.0, 0.0, "2MK6"};
+const tidal_wave wMSN6 __attribute__((unused)) ={ 0.000000, 2, +6, -5, +4, +1,  0, +4, -4,  0,  0, 0, 0,   0,   6, 23, 0.0, 0.0, "MSN6"};
+const tidal_wave w2SM6 __attribute__((unused)) ={ 0.000000, 2, +6, -2, +2,  0,  0, +2, -2,  0,  0, 0, 0,   0,  16,104, 0.0, 0.0, "2SM6"};
+const tidal_wave wMSK6 __attribute__((unused)) ={ 0.000000, 2, +6, -2, +4,  0,  0, +2, -2,  0, -2, 0, 0,   0,   8,105, 0.0, 0.0, "MSK6"};
+
+const tidal_wave wN8   __attribute__((unused)) ={ 0.000000, 2, +8,-12, +8, +4,  0, +8, -8,  0,  0, 0, 0,   0,   1, 33, 0.0, 0.0, "N8"  };
+const tidal_wave wM8   __attribute__((unused)) ={ 0.000000, 2, +8, -8, +8,  0,  0, +8, -8,  0,  0, 0, 0,   0,   1, 18, 0.0, 0.0, "M8"  };
+const tidal_wave w3MS8 __attribute__((unused)) ={ 0.000000, 2, +8, -6, +6,  0,  0, +6, -6,  0,  0, 0, 0,   0,  19, 61, 0.0, 0.0, "3MS8"};
+const tidal_wave wS8   __attribute__((unused)) ={ 0.000000, 2, +8,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0, 13, 0.0, 0.0, "S8"};
+
+/* before adding non-linear waves like crazy, please have a look at ``spectrum_t initialize_tide(bool Z0)`` */
+
+const tidal_wave wM10  __attribute__((unused)) ={ 0.000000, 2,+10,-10,+10,  0,  0,+10,-10,  0,  0, 0, 0,   0,   1, 18, 0.0, 0.0, "M10"  };
+
+const tidal_wave wRH5  __attribute__((unused)) ={ 0.000000, 2,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0, 78, 3.0, 3.0, "RH5"};
+
+/* NOTE: TOPEX/POSEIDON and JASON1 both have a 9.9156 days repetitivity,
+therefore aliasing M2 at 0.24152 deg/h or 62.108 days.
+It is not necessary to define mission-specific pseudo-waves as omega_from_frequency_or_period() can do this for you!
+const tidal_wave wTP60  __attribute__((unused)) ={ 0.000000, 2, 0,  0,  6,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0,  0, 0.0, 0.0, "TP60"};
+const tidal_wave wTP30  __attribute__((unused)) ={ 0.000000, 2, 0,  0, 12,  0,  0,  0,  0,  0,  0, 0, 0,   0,   0,  0, 0.0, 0.0, "TP30"};
+*/
+
+/** \file
+- the mean astronomical periods in degrees per Julian century, and their names from Schureman (1940, Tab1) #WAVELISTURL . \sa tides_compound() and initialize_tide() */
+const double omega_T __attribute__((unused)) =13149000.0;      //daily
+const double omega_s __attribute__((unused)) =  481267.892;    //Tropical-monthly, 27.321582 days
+const double omega_h __attribute__((unused)) =   36000.76892;  //Tropical-yearly, 365.2422 days
+
+#define P_DISAGREEMENT "Their appear to be a slight disagreement about p, p1, and N with Bernard Simon (2007) Tab5.4."
+///\note 2011-10-20 Damien Allain : see #P_DISAGREEMENT
+
+const double omega_p __attribute__((unused)) =    4069.0322056;//Revolution of Lunar perigee, 8.84 Julian years
+const double omega_n __attribute__((unused)) =    1934.1423972;//Revolution of lunar node, 18.6 Julian years
+const double omega_p1 __attribute__((unused)) =      1.719175; //Revolution of solar perigee, 20940 Julian years
+
+//bug 28-05-2010
+//const tidal_wave wL2   __attribute__((unused)) ={ 0.006694, 2, +2, -1, +2, -1,  0, +2, -2,  0,  0, 0, 0,+180, 215, 11, 0.0, 0.0, "L2"};
+//const tidal_wave wMO3  __attribute__((unused)) ={ 0.000000, 2, +3, -4, +1,  0,  0, +2, -2,  0,  0, 0, 0, +90,  13,102, 0.0, 0.0, "MO3"};
+//const tidal_wave wMKS2 __attribute__((unused)) ={ 0.000000, 2, +2, -2, +4,  0,  0, -2, -2,  0,  0, 0, 0,   0,   8, 30, 0.0, 0.0, "MKS2"};
+//const tidal_wave wMSN2 __attribute__((unused)) ={ 0.000000, 2, +2, +1,  0, +1,  0, +2, -2,  0, +2, 0, 0,   0,   6, 15, 0.0, 0.0, "MSN2"};
+
+#undef GLOBAL
+
+#endif

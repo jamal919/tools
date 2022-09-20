@@ -1,0 +1,37 @@
+#%Module 1.0 ###################################################################
+################################################################################
+# last version of ÉCôLa dependencies
+################################################################################
+
+#===============================================================================
+# dependencies of the dependencies
+#===============================================================================
+# module load netcdf/4.4
+#-------------------------------------------------------------------------------
+# corrections for some poorly coded module files
+#-------------------------------------------------------------------------------
+# set path $::env(NETCDF)
+# prepend-path PATH  $path/bin
+# prepend-path LIBRARY_PATH  $path/lib
+# prepend-path CPATH  $path/include
+
+
+#===============================================================================
+# main
+#===============================================================================
+# For others to use this,
+# you MUST change the HOME environment variable by its actual value
+set path $::env(HOME)/.local
+
+prepend-path PATH  $path/bin
+prepend-path LD_LIBRARY_PATH  $path/lib
+prepend-path LIBRARY_PATH  $path/lib
+prepend-path CPATH  $path/include
+prepend-path CMAKE_INCLUDE_PATH  $path/include
+
+setenv li $path
+
+#-------------------------------------------------------------------------------
+# Tools
+#-------------------------------------------------------------------------------
+# prepend-path PATH  .../tools/objects

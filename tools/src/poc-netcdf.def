@@ -1,0 +1,55 @@
+
+static char uc_names[12][4] __attribute__((unused)) ={"JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"};
+
+/* rank (number of dimensions) for each variable */
+#  define RANK_lon 2
+#  define RANK_lat 2
+#  define RANK_bathy_m 2
+#  define RANK_mask_m 2
+#  define RANK_level_dpth 3
+#  define RANK_time 1
+#  define RANK_nbniv 2
+
+/* necessaire specifiquement pour poc-netcdf05.cpp */
+/* rank (number of dimensions) for each variable */
+#  define RANK_spectrum 2
+#  define RANK_depth 2
+#  define RANK_Ha 3
+#  define RANK_Hg 3
+ 
+/* rank (number of dimensions) for each variable */
+#  define RANK_Ua 3
+#  define RANK_Ug 3
+#  define RANK_Va 3
+#  define RANK_Vg 3
+
+/* necessaire specifiquement pour convert-io.cpp */
+#  define RANK_h 3
+#  define RANK_u 3
+#  define RANK_v 3
+#  define RANK_p 3
+#  define RANK_ibd 3
+
+#define NSTD_ENTRY 8
+
+
+
+static const char *LGP0_standards[NSTD_ENTRY] __attribute__((unused)) ={"LGP0_NNPE","LGP0_NNODES","C-LGP0","LGP0_connectivity","LGP0_connectivity","z-LGP0","LGP0_levels","LGP0_levels"};
+static const char *LGP1_standards[NSTD_ENTRY] __attribute__((unused)) ={"LGP1_NNPE","N",          "C-LGP1","LGP1_connectivity","LGP1_connectivity","z-LGP1","LGP1_levels","LGP1_levels"};
+static const char *DGP1_standards[NSTD_ENTRY] __attribute__((unused)) ={"DGP1_NNPE","DGP1_NNODES","C-DGP1","DGP1_connectivity","DGP1_connectivity","z-DGP1","DGP1_levels","DGP1_levels"};
+static const char *DNP1_standards[NSTD_ENTRY] __attribute__((unused)) ={"DNP1_NNPE","DNP1_NNODES","C-DNP1","DNP1_connectivity","DNP1_connectivity","z-DNP1","DNP1_levels","DNP1_levels"};
+static const char *LGP2_standards[NSTD_ENTRY] __attribute__((unused)) ={"LGP2_NNPE","LGP2_NNODES","C-LGP2","LGP2_connectivity","LGP2_connectivity","z-LGP2","LGP2_levels","LGP2_levels"};
+static const char *DGP2_standards[NSTD_ENTRY] __attribute__((unused)) ={"DGP2_NNPE","DGP2_NNODES","C-DGP2","DGP2_connectivity","DGP2_connectivity","z-DGP2","DGP2_levels","DGP2_levels"};
+
+static const char *CQP0_standards[NSTD_ENTRY] __attribute__((unused)) ={"CQP0_NNPE","CQP0_NNODES","C-CQP0","CQP0_connectivity","CQP0_connectivity","z-CQP0","CQP0_levels","CQP0_levels"};
+static const char *CQN1_standards[NSTD_ENTRY] __attribute__((unused)) ={"CQN1_NNPE","CQN1_NNODES","C-CQN1","CQN1_connectivity","CQN1_connectivity","z-CQN1","CQN1_levels","CQN1_levels"};
+
+
+#define NNPE_DIMNAME          0
+#define NNODES_DIMNAME        1
+#define CONNECTIVITY_VARNAME  2
+#define CONNECTIVITY_STDNAME  3
+#define CONNECTIVITY_LNGNAME  4
+#define LEVELS_VARNAME        5
+#define LEVELS_LNGNAME        6
+#define LEVELS_STDNAME        7

@@ -1,0 +1,38 @@
+#if ARCHIVE_DEF == 0
+#define ARCHIVE_DEF 1
+
+#include "archive.h"
+
+#ifdef SOFTSWAP
+
+#define date_swap (*date_swap_ptr)
+#define shswap    (*shswap_ptr)
+#define lswap     (*lswap_ptr)
+#define dswap2    (*dswap2_ptr)
+#define f3swap    (*f3swap_ptr)
+
+#endif
+
+#define LINEAR 0
+#define QUADRATIC 1
+#define CUBIC 2
+#define SPLINE 4
+
+
+static double *set_z[3] __attribute__((unused));
+static double *set_u[3] __attribute__((unused));
+static double *set_v[3] __attribute__((unused));
+static double *set_Hu[3] __attribute__((unused));
+static double *set_Hv[3] __attribute__((unused));
+static double *set_H[3] __attribute__((unused));
+static double *set_sfd[3] __attribute__((unused));
+
+static double set_time[3] __attribute__((unused))={-1,-1,-1},set_step __attribute__((unused));
+static int archive_verbose __attribute__((unused))=0;
+static date_t t_reference __attribute__((unused));
+//static dummy_t obc_memory={0.,null_meta_archive,0,NULL,0};
+static dummy_t obc_memory __attribute__((unused));
+static basic_obsolete_t *set_basic __attribute__((unused));
+static char *external_path __attribute__((unused)),*external_root __attribute__((unused));
+
+#endif

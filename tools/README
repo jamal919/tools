@@ -1,0 +1,72 @@
+Description
+===========
+
+The SIROCCO tools are a software suite of executables and libraries for pre
+and post-processings in ocean modelling (configuration set-up and data/simulations analyses).
+It is aimed to accept and be compliant with most Earth science formats.
+It is a part of the French national COMODO (community developments for ocean modeling) initiative.
+
+SIROCCO is funded by INSU and Observatoire Midi-Pyrénées/Université Paul Sabatier
+and receives project support from CNES, SHOM, IFREMER and ANR.
+
+For more information about SIROCCO, please e-mail sirocco@aero.obs-mip.fr .
+
+The license is GPLv2. Please see the LICENSE file for details.
+The SIROCCO tools use external GPL and LGPL scientific codes:
+  - GNU Scientific Library
+  - triangle package
+  - Shapefile C Library
+  - and others through the poc-solvers
+
+How to acknowledge
+==================
+
+Please acknowledge use of the SIROCCO tools with:
+  " The SIROCCO tools are developed and maintained by the SIROCCO national service (CNRS/INSU).
+  SIROCCO is funded by INSU and Observatoire Midi-Pyrénées/Université Paul Sabatier
+  and receives project support from CNES, SHOM, IFREMER and ANR. "
+
+Dependencies
+============
+
+The SIROCCO Tools need:
+- optionally the developpment files for shp for Shapefiles (.shp) support
+- flex, bison, a late version of the poc-solvers and the developpment files for:
+    - proj-4.8 or above (preferably proj-4.9.0b2 or above)
+    - gsl, netcdf and lapack
+    to compile.
+
+See http://software.opensuse.org/search if you have openSUSE and can not find them on the default repository.
+
+If:
+- you do not have administrator priviledges
+- and you can not wait for your administrator
+  to install the dependencies from your distribution,
+user installation instructions for the dependencies are in the DEPENDENCIES_NOT_ROOT.rst file.
+
+How to build
+============
+
+Produce configure with :
+  > autoreconf -si
+and Makefile's with :
+  > ./configure
+Then compile with :
+  > make clean
+  > make
+You can append make's -j option followed by the number of processors on your machine.
+As some versions of autoconf do not deal properly with flex and bison targets,
+you may need to use make's -k option and run:
+  > make -k
+two or three times to compile the first time.
+
+How to update
+=============
+
+Once you have modified or updated your sources, update the binaries with:
+  > make
+If this fails, revert to the full build.
+
+For Doxygen documentation :
+  > make doxygen
+then READ THE MESSAGE AT THE END!

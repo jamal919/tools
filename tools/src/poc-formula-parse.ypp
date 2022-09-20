@@ -1,0 +1,131 @@
+%{
+#include <string.h>
+
+#define POC_FORMULA_PARSE_YPP 1
+#include "poc-data-operators.hpp"
+
+int yylex(void);
+void yyerror(poc_deque_t<poc_cdata_t*> &vars,char *s);
+
+/* see links in info:/bison/Table of Symbols */
+#define YYSTYPE poc_cdata_t
+%}
+
+/* see info:/bison/Parser Function */
+%parse-param {poc_deque_t<poc_cdata_t*> &vars}
+
+%token DOUBLE
+%token STRING
+%token NAME
+%token EOL
+
+/* see info:/bison/Infix Calc */
+%left '&'
+%left '-' '+'
+%left '*' '/' '%'
+%left NEG  /* negation */
+%right '^' /* exponentiation */
+
+%%
+
+program:
+  program statement
+  | 
+  ;
+
+statement:
+  EOL  /* allow empty lines */
+  | expr EOL
+  | NAME '=' expr EOL  {
+      YYSTYPE *v;
+      if($1.info.name == "nan"){
+        int i;
+        v=poc_formula_check_var(vars,$1.info.name,&i);
+        v->destroy_data();
+        vars.erase(i);
+        }
+      else{
+        v=&poc_formula_get_var(vars,$1.info.name);
+        *v = $3;
+        /*v->info.init($1.info.name,NC_DOUBLE);*//*fails with STRING*/
+        v->info.name=$1.info.name;
+        }
+      poc_formula_keep_consts(vars);
+      }
+  | NAME '?' NAME '(' expr ')' EOL {
+      YYSTYPE *v=&poc_formula_get_var(vars,$1.info.name);
+      poc_formula_implement_func(vars,v,$3.info.name,$5);
+      poc_formula_keep_consts(vars);
+      }
+  ;
+
+expr:
+    DOUBLE  {
+      $$.info.clear();
+      $$ = $1.data[0];
+      }
+  | STRING  {
+      $$.info.clear();
+      string *s=&$1.info.name;
+      $$ = s->substr(1,s->size()-2);
+      }
+  | NAME  {
+      poc_formula_keep_consts(vars);
+      $$ = poc_formula_get_var(vars,$1.info.name);
+      }
+  | expr ',' expr           { $$ = comma_operator(vars,$1,$3); }
+/* see http://www.cplusplus.com/doc/tutorial/operators/#precedence */
+  | expr '&' '&' expr       { $$ = $1 && $4; }
+  | expr '|' '|' expr       { $$ = $1 || $4; }
+  | expr '&' expr           { $$ = $1 & $3; }
+  | expr '|' expr           { $$ = $1 | $3; }
+  | expr '<' expr           { $$ = $1 < $3; }
+  | expr '<' '=' expr       { $$ = $1 <= $4; }
+  | expr '>' expr           { $$ = $1 > $3; }
+  | expr '>' '=' expr       { $$ = $1 >= $4; }
+  | expr '=' '=' expr       { $$ = $1 == $4; }
+  | expr '!' '=' expr       { $$ = $1 != $4; }
+  | expr '<' '<' expr       { $$ = $1 << $4; }
+  | expr '+' expr           { $$ = $1 + $3; }
+  | expr '-' expr           { $$ = $1 - $3; }
+  | expr '*' expr           { $$ = $1 * $3; }
+  | expr '%' expr           { $$ = $1 % $3; }
+  | expr '/' expr           { $$ = $1 / $3; }
+  | expr ':' expr           { $$ = semicolon_operator($1,$3); }
+  | '-' expr  %prec NEG     { $$ = -$2; }
+  | expr '^' expr           { $$ = $1 ^ $3; }
+  | expr '[' expr ']'       { poc_data_index(&$$,$1,$3); }
+  | '(' expr ')'            { $$ = $2; }
+  | NAME '(' expr ')' {
+      $$.info.clear();
+      poc_formula_implement_func(vars,&$$,$1.info.name,$3);
+      }
+  | NAME '(' ')'     {
+      poc_formula_implement_func(vars,0,$1.info.name,$1);
+      }
+  ;
+
+%%
+
+void yyerror(poc_deque_t<poc_cdata_t*> &vars,char *s) {
+  fprintf(stderr, "%p:%s\n", &vars, s);
+}
+
+typedef struct yy_buffer_state *YY_BUFFER_STATE;
+extern YY_BUFFER_STATE portable_yy_scan_bytes(const char *,size_t);
+extern void yy_delete_buffer(YY_BUFFER_STATE);
+
+int poc_formula_parse(poc_deque_t<poc_cdata_t*> &vars,const char *str) {
+  if(str[0]=='\0')
+    return 0;
+  // see info:/flex/Multiple Input Buffers
+  size_t l=strlen(str);
+  /* using yy_scan_bytes because, unlike yy_scan_string(const char *),
+  it can give the '\0' terminating character, that so can be scanned as an EOL token */
+  /* using portable_yy_scan_bytes from poc-formula-scan.lpp
+  because of compatibility issues between Flex versions */
+  YY_BUFFER_STATE buffer=portable_yy_scan_bytes(str,l+1);
+  yyparse(vars);
+  yy_delete_buffer(buffer);
+  return 0;
+}

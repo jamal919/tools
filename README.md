@@ -7,7 +7,7 @@ SIROCCO is funded by INSU and Observatoire Midi-Pyrénées/Université Paul Saba
 
 This is an _independent_ dockerized version of the SIROCCO tools for easy deployment and sharing. A few of the dependencies are not directly available hence included in this repository under their respective LICENSE.
 
-The main reason behind this docker is the SIROCCO tools only compiles with the older version of the GCC (GCC7), and does not play very well will new linux installations. Additionally, it does not allow using the tools in Windows or Mac. With docker, all these problems can be mitigated with extremely low overhead from docker itself (typically ~1MB), and with full access to the total computer capacity (processor, RAM) unlike virtualbox, or other virtualization systems. In other words, the SIROCCO tools can be used seamlessly in Windows, Linux, or Mac.
+The main reason behind this docker is that the SIROCCO tools only compiles with the older version of the GCC (GCC7), and does not play very well will new linux installations. Additionally, it does not allow using the tools in Windows or Mac. With docker, all these problems can be mitigated with extremely low overhead from docker itself (typically ~1MB), and with full access to the total computer capacity (processor, RAM) unlike virtualbox, or other virtualization systems. In other words, the SIROCCO tools can be used seamlessly in Windows, Linux, or Mac.
 
 # Installation
 To run the docker, one needs to install docker in their system. The docker is tested run on WINDOWS, LINUX, and MAC (both Intel and Apple Silicon chips). 
